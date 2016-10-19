@@ -125,6 +125,9 @@ namespace ILCompiler.DependencyAnalysis
                 MethodDesc impl = defType.FindVirtualFunctionTargetMethodOnObjectType(decl);
                 if (impl.OwningType == defType && !impl.IsAbstract)
                 {
+                    if (decl.HasInstantiation)
+                        continue;
+
                     MethodDesc canonImpl = impl.GetCanonMethodTarget(CanonicalFormKind.Specific);
                     yield return new CombinedDependencyListEntry(factory.MethodEntrypoint(canonImpl, _type.IsValueType), factory.VirtualMethodUse(decl), "Virtual method");
                 }
@@ -193,8 +196,7 @@ namespace ILCompiler.DependencyAnalysis
 
                 if (declMethod.HasInstantiation)
                 {
-                    // Generic virtual methods will "compile", but will fail to link. Check for it here.
-                    throw new NotImplementedException("VTable for " + _type + " has generic virtual methods.");
+                    continue;
                 }
 
                 if (!implMethod.IsAbstract)

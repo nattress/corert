@@ -1,0 +1,1 @@
+"C:\git\corert\tests\\..\bin\Product\Windows_NT.x64.Debug\packaging\publish1\CoreRun.exe" xunit.console.netcore.exe c:\git\corert\tests\src\Simple\XUnit\obj\Debug\XUnit.dll
