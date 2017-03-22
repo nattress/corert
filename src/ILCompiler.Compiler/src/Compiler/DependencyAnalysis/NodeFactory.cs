@@ -147,7 +147,15 @@ namespace ILCompiler.DependencyAnalysis
                     }
                     else if (type.IsCanonicalSubtype(CanonicalFormKind.Any))
                     {
-                        return new CanonicalEETypeNode(this, type);
+                        if (Target.Abi == TargetAbi.CoreRT)
+                        {
+                            return new CanonicalEETypeNode(this, type);
+                        }
+                        else
+                        {
+                            // Remove this once we stop using the STS dependency analysis.
+                            return new NecessaryCanonicalEETypeNode(this, type);
+                        }
                     }
                     else
                     {
@@ -346,15 +354,22 @@ namespace ILCompiler.DependencyAnalysis
             
             _vTableNodes = new NodeCache<TypeDesc, VTableSliceNode>((TypeDesc type ) =>
             {
-                if (CompilationModuleGroup.ShouldProduceFullType(type))
+                if (CompilationModuleGroup.ShouldProduceFullVTable(type))
                     return new EagerlyBuiltVTableSliceNode(type);
                 else
                     return new LazilyBuiltVTableSliceNode(type);
             });
 
-            _methodGenericDictionaries = new NodeCache<MethodDesc, GenericDictionaryNode>(method =>
+            _methodGenericDictionaries = new NodeCache<MethodDesc, ISymbolNode>(method =>
             {
-                return new MethodGenericDictionaryNode(method);
+                if (CompilationModuleGroup.ContainsMethod(method))
+                {
+                    return new MethodGenericDictionaryNode(method);
+                }
+                else
+                {
+                    return new ImportedMethodGenericDictionaryNode(this, method);
+                }
             });
 
             _typeGenericDictionaries = new NodeCache<TypeDesc, GenericDictionaryNode>(type =>
@@ -387,7 +402,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public IEETypeNode NecessaryTypeSymbol(TypeDesc type)
         {
-            if (_compilationModuleGroup.ShouldProduceFullType(type))
+            if (_compilationModuleGroup.ShouldPromoteToFullType(type))
             {
                 return ConstructedTypeSymbol(type);
             }
@@ -560,8 +575,8 @@ namespace ILCompiler.DependencyAnalysis
             return _vTableNodes.GetOrAdd(type);
         }
 
-        private NodeCache<MethodDesc, GenericDictionaryNode> _methodGenericDictionaries;
-        public GenericDictionaryNode MethodGenericDictionary(MethodDesc method)
+        private NodeCache<MethodDesc, ISymbolNode> _methodGenericDictionaries;
+        public ISymbolNode MethodGenericDictionary(MethodDesc method)
         {
             return _methodGenericDictionaries.GetOrAdd(method);
         }

@@ -108,6 +108,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)System\DataMisalignedException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\DateTimeKind.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\DayOfWeek.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\DefaultBinder.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\DivideByZeroException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\DuplicateWaitObjectException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\EntryPointNotFoundException.cs"/>
@@ -155,13 +156,17 @@
     <Compile Include="$(MSBuildThisFileDirectory)System\ParamArrayAttribute.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\PlatformNotSupportedException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\RankException.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\Assembly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\ConstructorInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\EventInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\FieldInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\MemberInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\MethodInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\MethodBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\ObfuscateAssemblyAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\ObfuscationAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\ParameterInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\PropertyInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\TypeDelegator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)System\Reflection\TypeInfo.cs" />
@@ -192,6 +197,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\PartialTrustVisibilityLevel.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecurityCriticalAttribute.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecurityCriticalScope.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecurityException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecurityRulesAttribute.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecurityRuleSet.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\Security\SecuritySafeCriticalAttribute.cs"/>
@@ -210,6 +216,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)System\TimeoutException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\TimeZoneNotFoundException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\TupleExtensions.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\Type.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\Type.Enum.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)System\Type.Helpers.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\TypeAccessException.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\TypeCode.cs"/>
     <Compile Include="$(MSBuildThisFileDirectory)System\TypeInitializationException.cs"/>

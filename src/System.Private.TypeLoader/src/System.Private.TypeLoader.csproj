@@ -65,6 +65,7 @@
     <Compile Include="..\..\Common\src\TypeSystem\RuntimeDetermined\TypeSystemContext.RuntimeDetermined.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\Stubs\ILEmitter.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\Stubs\DelegateThunks.cs" />
+    <Compile Include="..\..\Common\src\TypeSystem\IL\Stubs\EnumThunks.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\HelperExtensions.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\ILDisassember.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\ILOpcode.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="..\..\Common\src\TypeSystem\IL\MethodILDebugView.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\DelegateInfo.cs" />
     <Compile Include="..\..\Common\src\TypeSystem\IL\TypeSystemContext.DelegateInfo.cs" />
+    <Compile Include="..\..\Common\src\TypeSystem\IL\TypeSystemContext.EnumMethods.cs" />
     <Compile Include="Internal\TypeSystem\ILStubMethod.Runtime.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\JitSupport.MethodEntrypointStubs.cs" />
   </ItemGroup>
@@ -174,6 +176,9 @@
     </Compile>
     <Compile Include="..\..\Common\src\Internal\Runtime\TransitionBlock.cs">
       <Link>TransitionBlock.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Common\src\Internal\Runtime\UniversalGenericParameterLayout.cs">
+      <Link>UniversalGenericParameterLayout.cs</Link>
     </Compile>
     <Compile Include="..\..\Common\src\System\Collections\Generic\LowLevelList.cs" />
     <Compile Include="..\..\Common\src\Internal\Runtime\MetadataBlob.cs">
@@ -371,6 +376,9 @@
     <Compile Include="..\..\Common\src\TypeSystem\Common\TypeSystemHelpers.cs">
       <Link>Internal\TypeSystem\TypeSystemHelpers.cs</Link>
     </Compile>
+    <Compile Include="..\..\Common\src\TypeSystem\Common\UniversalCanonLayoutAlgorithm.cs">
+      <Link>UniversalCanonLayoutAlgorithm.cs</Link>
+    </Compile>
     <Compile Include="..\..\Common\src\TypeSystem\Common\Utilities\LockFreeReaderHashtable.cs">
       <Link>LockFreeReaderHashtable.cs</Link>
     </Compile>
@@ -394,6 +402,7 @@
     <Compile Include="Internal\Runtime\TypeLoader\CallInterceptor.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\CanonicallyEquivalentEntryLocator.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\ConstrainedCallSupport.cs" />
+    <Compile Include="Internal\Runtime\TypeLoader\DebugFuncEval.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\DispatchCellInfo.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\EEType.Runtime.cs" />
     <Compile Include="Internal\Runtime\TypeLoader\EETypeCreator.cs" />

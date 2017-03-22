@@ -2,13 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Reflection;
 using System.Diagnostics;
-using System.Reflection.Runtime.General;
 using CultureInfo = System.Globalization.CultureInfo;
 
-namespace System.Reflection.Runtime.BindingFlagSupport
+namespace System
 {
-    internal sealed partial class DefaultBinder : Binder
+    //Marked serializable even though it has no state.
+    [Serializable]
+#if CORECLR
+    internal
+#else
+    public sealed
+#endif
+    partial class DefaultBinder : Binder
     {
         // This method is passed a set of methods and must choose the best
         // fit.  The methods all have the same number of arguments and the object
@@ -24,8 +31,8 @@ namespace System.Reflection.Runtime.BindingFlagSupport
         // The most specific match will be selected.  
         // 
         public sealed override MethodBase BindToMethod(
-            BindingFlags bindingAttr, MethodBase[] match, ref Object[] args,
-            ParameterModifier[] modifiers, CultureInfo cultureInfo, String[] names, out Object state)
+            BindingFlags bindingAttr, MethodBase[] match, ref object[] args,
+            ParameterModifier[] modifiers, CultureInfo cultureInfo, string[] names, out object state)
         {
             if (match == null || match.Length == 0)
                 throw new ArgumentException(SR.Arg_EmptyArray, nameof(match));
@@ -37,7 +44,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
             state = null;
 
-            #region Map named parameters to candidate parameter postions
+#region Map named parameters to candidate parameter postions
             // We are creating an paramOrder array to act as a mapping
             //  between the order of the args and the actual order of the
             //  parameters in the method.  This order may differ because
@@ -66,13 +73,13 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         candidates[i] = null;
                 }
             }
-            #endregion
+#endregion
 
             Type[] paramArrayTypes = new Type[candidates.Length];
 
             Type[] argTypes = new Type[args.Length];
 
-            #region Cache the type of the provided arguments
+#region Cache the type of the provided arguments
             // object that contain a null are treated as if they were typeless (but match either object 
             // references or value classes).  We mark this condition by placing a null in the argTypes array.
             for (i = 0; i < args.Length; i++)
@@ -82,7 +89,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                     argTypes[i] = args[i].GetType();
                 }
             }
-            #endregion
+#endregion
 
 
             // Find the method that matches...
@@ -91,7 +98,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
             Type paramArrayType = null;
 
-            #region Filter methods by parameter count and type
+#region Filter methods by parameter count and type
             for (i = 0; i < candidates.Length; i++)
             {
                 paramArrayType = null;
@@ -103,10 +110,10 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                 // Validate the parameters.
                 ParameterInfo[] par = candidates[i].GetParametersNoCopy();
 
-                #region Match method by parameter count
+#region Match method by parameter count
                 if (par.Length == 0)
                 {
-                    #region No formal parameters
+#region No formal parameters
                     if (args.Length != 0)
                     {
                         if ((candidates[i].CallingConvention & CallingConventions.VarArgs) == 0)
@@ -118,11 +125,11 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                     candidates[CurIdx++] = candidates[i];
 
                     continue;
-                    #endregion
+#endregion
                 }
                 else if (par.Length > args.Length)
                 {
-                    #region Shortage of provided parameters
+#region Shortage of provided parameters
                     // If the number of parameters is greater than the number of args then 
                     // we are in the situation were we may be using default values.
                     for (j = args.Length; j < par.Length - 1; j++)
@@ -144,11 +151,11 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
                         paramArrayType = par[j].ParameterType.GetElementType();
                     }
-                    #endregion
+#endregion
                 }
                 else if (par.Length < args.Length)
                 {
-                    #region Excess provided parameters
+#region Excess provided parameters
                     // test for the ParamArray case
                     int lastArgPos = par.Length - 1;
 
@@ -162,11 +169,11 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         continue;
 
                     paramArrayType = par[lastArgPos].ParameterType.GetElementType();
-                    #endregion
+#endregion
                 }
                 else
                 {
-                    #region Test for paramArray, save paramArray type
+#region Test for paramArray, save paramArray type
                     int lastArgPos = par.Length - 1;
 
                     if (par[lastArgPos].ParameterType.IsArray
@@ -176,17 +183,17 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         if (!par[lastArgPos].ParameterType.IsAssignableFrom(argTypes[lastArgPos]))
                             paramArrayType = par[lastArgPos].ParameterType.GetElementType();
                     }
-                    #endregion
+#endregion
                 }
-                #endregion
+#endregion
 
                 Type pCls = null;
                 int argsToCheck = (paramArrayType != null) ? par.Length - 1 : args.Length;
 
-                #region Match method by parameter type
+#region Match method by parameter type
                 for (j = 0; j < argsToCheck; j++)
                 {
-                    #region Classic argument coersion checks
+#region Classic argument coersion checks
                     // get the formal type
                     pCls = par[j].ParameterType;
 
@@ -206,13 +213,13 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         continue;
 
                     // the type is Object, so it will match everything
-                    if (pCls == CommonRuntimeTypes.Object)
+                    if (pCls == typeof(object))
                         continue;
 
                     // now do a "classic" type check
                     if (pCls.IsPrimitive)
                     {
-                        if (argTypes[paramOrder[i][j]] == null || !CanConvertPrimitiveObjectToType(args[paramOrder[i][j]], pCls))
+                        if (argTypes[paramOrder[i][j]] == null || !CanChangePrimitiveObjectToType(args[paramOrder[i][j]], pCls))
                         {
                             break;
                         }
@@ -232,17 +239,17 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                             break;
                         }
                     }
-                    #endregion
+#endregion
                 }
 
                 if (paramArrayType != null && j == par.Length - 1)
                 {
-                    #region Check that excess arguments can be placed in the param array
+#region Check that excess arguments can be placed in the param array
                     for (; j < args.Length; j++)
                     {
                         if (paramArrayType.IsPrimitive)
                         {
-                            if (argTypes[j] == null || !CanConvertPrimitiveObjectToType(args[j], paramArrayType))
+                            if (argTypes[j] == null || !CanChangePrimitiveObjectToType(args[j], paramArrayType))
                                 break;
                         }
                         else
@@ -262,20 +269,20 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                             }
                         }
                     }
-                    #endregion
+#endregion
                 }
-                #endregion
+#endregion
 
                 if (j == args.Length)
                 {
-                    #region This is a valid routine so we move it up the candidates list
+#region This is a valid routine so we move it up the candidates list
                     paramOrder[CurIdx] = paramOrder[i];
                     paramArrayTypes[CurIdx] = paramArrayType;
                     candidates[CurIdx++] = candidates[i];
-                    #endregion
+#endregion
                 }
             }
-            #endregion
+#endregion
 
             // If we didn't find a method 
             if (CurIdx == 0)
@@ -283,7 +290,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
             if (CurIdx == 1)
             {
-                #region Found only one method
+#region Found only one method
                 if (names != null)
                 {
                     state = new BinderState((int[])paramOrder[0].Clone(), args.Length, paramArrayTypes[0] != null);
@@ -298,7 +305,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                 {
                     if (paramArrayTypes[0] != null)
                     {
-                        Object[] objs = new Object[parms.Length];
+                        object[] objs = new object[parms.Length];
                         int lastPos = parms.Length - 1;
                         Array.Copy(args, 0, objs, 0, lastPos);
                         objs[lastPos] = Array.CreateInstance(paramArrayTypes[0], 1);
@@ -308,7 +315,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                 }
                 else if (parms.Length > args.Length)
                 {
-                    Object[] objs = new Object[parms.Length];
+                    object[] objs = new object[parms.Length];
 
                     for (i = 0; i < args.Length; i++)
                         objs[i] = args[i];
@@ -328,7 +335,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                 {
                     if ((candidates[0].CallingConvention & CallingConventions.VarArgs) == 0)
                     {
-                        Object[] objs = new Object[parms.Length];
+                        object[] objs = new object[parms.Length];
                         int paramArrayPos = parms.Length - 1;
                         Array.Copy(args, 0, objs, 0, paramArrayPos);
                         objs[paramArrayPos] = Array.CreateInstance(paramArrayTypes[0], args.Length - paramArrayPos);
@@ -336,7 +343,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         args = objs;
                     }
                 }
-                #endregion
+#endregion
 
                 return candidates[0];
             }
@@ -345,7 +352,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             bool ambig = false;
             for (i = 1; i < CurIdx; i++)
             {
-                #region Walk all of the methods looking the most specific method to invoke
+#region Walk all of the methods looking the most specific method to invoke
                 int newMin = FindMostSpecificMethod(candidates[currentMin], paramOrder[currentMin], paramArrayTypes[currentMin],
                                                     candidates[i], paramOrder[i], paramArrayTypes[i], argTypes, args);
 
@@ -358,7 +365,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                     currentMin = i;
                     ambig = false;
                 }
-                #endregion
+#endregion
             }
 
             if (ambig)
@@ -378,7 +385,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             {
                 if (paramArrayTypes[currentMin] != null)
                 {
-                    Object[] objs = new Object[parameters.Length];
+                    object[] objs = new object[parameters.Length];
                     int lastPos = parameters.Length - 1;
                     Array.Copy(args, 0, objs, 0, lastPos);
                     objs[lastPos] = Array.CreateInstance(paramArrayTypes[currentMin], 1);
@@ -388,7 +395,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             }
             else if (parameters.Length > args.Length)
             {
-                Object[] objs = new Object[parameters.Length];
+                object[] objs = new object[parameters.Length];
 
                 for (i = 0; i < args.Length; i++)
                     objs[i] = args[i];
@@ -411,7 +418,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             {
                 if ((candidates[currentMin].CallingConvention & CallingConventions.VarArgs) == 0)
                 {
-                    Object[] objs = new Object[parameters.Length];
+                    object[] objs = new object[parameters.Length];
                     int paramArrayPos = parameters.Length - 1;
                     Array.Copy(args, 0, objs, 0, paramArrayPos);
                     objs[paramArrayPos] = Array.CreateInstance(paramArrayTypes[currentMin], args.Length - paramArrayPos);
@@ -426,7 +433,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         // Given a set of fields that match the base criteria, select a field.
         // if value is null then we have no way to select a field
-        public sealed override FieldInfo BindToField(BindingFlags bindingAttr, FieldInfo[] match, Object value, CultureInfo cultureInfo)
+        public sealed override FieldInfo BindToField(BindingFlags bindingAttr, FieldInfo[] match, object value, CultureInfo cultureInfo)
         {
             if (match == null)
             {
@@ -463,14 +470,14 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                             continue;
                         }
                     }
-                    if (pCls == CommonRuntimeTypes.Object)
+                    if (pCls == typeof(object))
                     {
                         candidates[CurIdx++] = candidates[i];
                         continue;
                     }
                     if (pCls.IsPrimitive)
                     {
-                        if (CanConvertPrimitiveObjectToType(value, pCls))
+                        if (CanChangePrimitiveObjectToType(value, pCls))
                         {
                             candidates[CurIdx++] = candidates[i];
                             continue;
@@ -549,12 +556,12 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                     Type pCls = par[j].ParameterType;
                     if (pCls == types[j])
                         continue;
-                    if (pCls == CommonRuntimeTypes.Object)
+                    if (pCls == typeof(object))
                         continue;
                     if (pCls.IsPrimitive)
                     {
                         if (!(types[j].UnderlyingSystemType.IsRuntimeImplemented()) ||
-                            !CanConvertPrimitive(types[j].UnderlyingSystemType, pCls.UnderlyingSystemType))
+                            !CanChangePrimitive(types[j].UnderlyingSystemType, pCls.UnderlyingSystemType))
                             break;
                     }
                     else
@@ -623,7 +630,6 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             int indexesLength = (indexes != null) ? indexes.Length : 0;
             for (i = 0; i < candidates.Length; i++)
             {
-
                 if (indexes != null)
                 {
                     ParameterInfo[] par = candidates[i].GetIndexParameters();
@@ -637,13 +643,13 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         // If the classes  exactly match continue
                         if (pCls == indexes[j])
                             continue;
-                        if (pCls == CommonRuntimeTypes.Object)
+                        if (pCls == typeof(object))
                             continue;
 
                         if (pCls.IsPrimitive)
                         {
                             if (!(indexes[j].UnderlyingSystemType.IsRuntimeImplemented()) ||
-                                !CanConvertPrimitive(indexes[j].UnderlyingSystemType, pCls.UnderlyingSystemType))
+                                !CanChangePrimitive(indexes[j].UnderlyingSystemType, pCls.UnderlyingSystemType))
                                 break;
                         }
                         else
@@ -661,7 +667,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
                         if (candidates[i].PropertyType.IsPrimitive)
                         {
                             if (!(returnType.UnderlyingSystemType.IsRuntimeImplemented()) ||
-                                !CanConvertPrimitive(returnType.UnderlyingSystemType, candidates[i].PropertyType.UnderlyingSystemType))
+                                !CanChangePrimitive(returnType.UnderlyingSystemType, candidates[i].PropertyType.UnderlyingSystemType))
                                 continue;
                         }
                         else
@@ -717,12 +723,12 @@ namespace System.Reflection.Runtime.BindingFlagSupport
         // ChangeType
         // The default binder doesn't support any change type functionality.
         // This is because the default is built into the low level invoke code.
-        public sealed override Object ChangeType(Object value, Type type, CultureInfo cultureInfo)
+        public override object ChangeType(object value, Type type, CultureInfo cultureInfo)
         {
             throw new NotSupportedException(SR.NotSupported_ChangeType);
         }
 
-        public sealed override void ReorderArgumentArray(ref Object[] args, Object state)
+        public sealed override void ReorderArgumentArray(ref object[] args, object state)
         {
             BinderState binderState = (BinderState)state;
             ReorderParams(binderState.m_argsMap, args);
@@ -730,15 +736,15 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             {
                 int paramArrayPos = args.Length - 1;
                 if (args.Length == binderState.m_originalSize)
-                    args[paramArrayPos] = ((Object[])args[paramArrayPos])[0];
+                    args[paramArrayPos] = ((object[])args[paramArrayPos])[0];
                 else
                 {
                     // must be args.Length < state.originalSize
-                    Object[] newArgs = new Object[args.Length];
+                    object[] newArgs = new object[args.Length];
                     Array.Copy(args, 0, newArgs, 0, paramArrayPos);
                     for (int i = paramArrayPos, j = 0; i < newArgs.Length; i++, j++)
                     {
-                        newArgs[i] = ((Object[])args[paramArrayPos])[j];
+                        newArgs[i] = ((object[])args[paramArrayPos])[j];
                     }
                     args = newArgs;
                 }
@@ -747,7 +753,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             {
                 if (args.Length > binderState.m_originalSize)
                 {
-                    Object[] newArgs = new Object[binderState.m_originalSize];
+                    object[] newArgs = new object[binderState.m_originalSize];
                     Array.Copy(args, 0, newArgs, 0, binderState.m_originalSize);
                     args = newArgs;
                 }
@@ -756,7 +762,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         // Return any exact bindings that may exist. (This method is not defined on the
         //  Binder and is used by RuntimeType.)
-        internal static MethodBase ExactBinding(MethodBase[] match, Type[] types, ParameterModifier[] modifiers)
+        public static MethodBase ExactBinding(MethodBase[] match, Type[] types, ParameterModifier[] modifiers)
         {
             if (match == null)
                 throw new ArgumentNullException(nameof(match));
@@ -799,7 +805,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         // Return any exact bindings that may exist. (This method is not defined on the
         //  Binder and is used by RuntimeType.)
-        internal static PropertyInfo ExactPropertyBinding(PropertyInfo[] match, Type returnType, Type[] types, ParameterModifier[] modifiers)
+        public static PropertyInfo ExactPropertyBinding(PropertyInfo[] match, Type returnType, Type[] types, ParameterModifier[] modifiers)
         {
             if (match == null)
                 throw new ArgumentNullException(nameof(match));
@@ -833,7 +839,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         private static int FindMostSpecific(ParameterInfo[] p1, int[] paramOrder1, Type paramArrayType1,
                                             ParameterInfo[] p2, int[] paramOrder2, Type paramArrayType2,
-                                            Type[] types, Object[] args)
+                                            Type[] types, object[] args)
         {
             // A method using params is always less specific than one not using params
             if (paramArrayType1 != null && paramArrayType2 == null) return 2;
@@ -949,8 +955,8 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
             if (c1.IsPrimitive && c2.IsPrimitive)
             {
-                c1FromC2 = CanConvertPrimitive(c2, c1);
-                c2FromC1 = CanConvertPrimitive(c1, c2);
+                c1FromC2 = CanChangePrimitive(c2, c1);
+                c2FromC1 = CanChangePrimitive(c1, c2);
             }
             else
             {
@@ -973,7 +979,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         private static int FindMostSpecificMethod(MethodBase m1, int[] paramOrder1, Type paramArrayType1,
                                                   MethodBase m2, int[] paramOrder2, Type paramArrayType2,
-                                                  Type[] types, Object[] args)
+                                                  Type[] types, object[] args)
         {
             // Find the most specific method based on the parameters.
             int res = FindMostSpecific(m1.GetParametersNoCopy(), paramOrder1, paramArrayType1,
@@ -1054,7 +1060,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             return 0;
         }
 
-        internal static bool CompareMethodSig(MethodBase m1, MethodBase m2)
+        public static bool CompareMethodSig(MethodBase m1, MethodBase m2)
         {
             ParameterInfo[] params1 = m1.GetParametersNoCopy();
             ParameterInfo[] params2 = m2.GetParametersNoCopy();
@@ -1086,7 +1092,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
             return depth;
         }
 
-        private static MethodBase FindMostDerivedNewSlotMeth(MethodBase[] match, int cMatches)
+        internal static MethodBase FindMostDerivedNewSlotMeth(MethodBase[] match, int cMatches)
         {
             int deepestHierarchy = 0;
             MethodBase methWithDeepestHierarchy = null;
@@ -1117,7 +1123,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
 
         // This method will sort the vars array into the mapping order stored
         //  in the paramOrder array.
-        private static void ReorderParams(int[] paramOrder, Object[] vars)
+        private static void ReorderParams(int[] paramOrder, object[] vars)
         {
             object[] varsCopy = new object[vars.Length];
             for (int i = 0; i < vars.Length; i++)
@@ -1132,7 +1138,7 @@ namespace System.Reflection.Runtime.BindingFlagSupport
         //  as the values and maps to the parameters of the method.  We store the mapping
         //  from the parameters to the names in the paramOrder array.  All parameters that
         //  don't have matching names are then stored in the array in order.
-        private static bool CreateParamOrder(int[] paramOrder, ParameterInfo[] pars, String[] names)
+        private static bool CreateParamOrder(int[] paramOrder, ParameterInfo[] pars, string[] names)
         {
             bool[] used = new bool[pars.Length];
 

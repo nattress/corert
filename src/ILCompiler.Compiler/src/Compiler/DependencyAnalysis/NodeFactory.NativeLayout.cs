@@ -52,6 +52,11 @@ namespace ILCompiler.DependencyAnalysis
                     return new NativeLayoutPlacedVertexSequenceVertexNode(vertices.Vertices);
                 });
 
+                _placedUIntVertexSequence = new NodeCache<List<uint>, NativeLayoutPlacedVertexSequenceOfUIntVertexNode>(uints =>
+                {
+                    return new NativeLayoutPlacedVertexSequenceOfUIntVertexNode(uints);
+                }, new UIntSequenceComparer());
+
                 _methodLdTokenSignatures = new NodeCache<MethodDesc, NativeLayoutMethodLdTokenVertexNode>(method =>
                 {
                     return new NativeLayoutMethodLdTokenVertexNode(_factory, method);
@@ -245,6 +250,46 @@ namespace ILCompiler.DependencyAnalysis
                 return _placedVertexSequence.GetOrAdd(new VertexSequenceKey(vertices));
             }
 
+            class UIntSequenceComparer : IEqualityComparer<List<uint>>
+            {
+                bool IEqualityComparer<List<uint>>.Equals(List<uint> x, List<uint> y)
+                {
+                    if (x.Count != y.Count)
+                        return false;
+
+                    for (int i = 0; i < x.Count; i++)
+                    {
+                        if (x[i] != y[i])
+                            return false;
+                    }
+                    return true;
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private static int _rotl(int value, int shift)
+                {
+                    // This is expected to be optimized into a single rotl instruction
+                    return (int)(((uint)value << shift) | ((uint)value >> (32 - shift)));
+                }
+
+                int IEqualityComparer<List<uint>>.GetHashCode(List<uint> obj)
+                {
+                    int hashcode = 0x42284781;
+                    foreach (uint u in obj)
+                    {
+                        hashcode ^= (int)u;
+                        hashcode = _rotl(hashcode, 5);
+                    }
+
+                    return hashcode;
+                }
+            }
+            private NodeCache<List<uint>, NativeLayoutPlacedVertexSequenceOfUIntVertexNode> _placedUIntVertexSequence;
+            internal NativeLayoutPlacedVertexSequenceOfUIntVertexNode PlacedUIntVertexSequence(List<uint> uints)
+            {
+                return _placedUIntVertexSequence.GetOrAdd(uints);
+            }
+
             private NodeCache<MethodDesc, NativeLayoutMethodLdTokenVertexNode> _methodLdTokenSignatures;
             internal NativeLayoutMethodLdTokenVertexNode MethodLdTokenVertex(MethodDesc method)
             {
@@ -352,6 +397,8 @@ namespace ILCompiler.DependencyAnalysis
             {
                 return _methodDictionary_GenericDictionarySlots.GetOrAdd(method);
             }
+
+            public readonly NativeLayoutNotSupportedDictionarySlotNode NotSupportedDictionarySlot = new NativeLayoutNotSupportedDictionarySlotNode();
 
             private struct MethodEntrypointSlotKey : IEquatable<MethodEntrypointSlotKey>
             {
