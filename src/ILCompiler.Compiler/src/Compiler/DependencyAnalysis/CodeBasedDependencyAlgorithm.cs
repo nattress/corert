@@ -49,6 +49,31 @@ namespace ILCompiler.DependencyAnalysis
                 if (method.OwningType.IsValueType && !method.Signature.IsStatic && !skipUnboxingStubDependency)
                     dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(method, unboxingStub: true), "Reflection unboxing stub"));
 
+                if (method.IsVirtual && !method.HasInstantiation && !factory.CompilationModuleGroup.ShouldProduceFullVTable(method.OwningType))
+                {
+                    MethodDesc declaringMethodForSlot = MetadataVirtualMethodAlgorithm.FindSlotDefiningMethodForVirtualMethod(method.GetTypicalMethodDefinition());
+                    uint parentHierarchyDistance = 0;
+                    TypeDesc typeOfDeclaringMethodForSlot = declaringMethodForSlot.OwningType.GetTypeDefinition();
+                    TypeDesc currentType = method.OwningType.GetTypeDefinition();
+
+                    while (typeOfDeclaringMethodForSlot != currentType)
+                    {
+                        parentHierarchyDistance++;
+                        currentType = currentType.BaseType.GetTypeDefinition();
+                    }
+                    if (method.OwningType.HasInstantiation)
+                    {
+                        TypeDesc containingTypeOfDeclaringMethodForSlot = method.OwningType;
+                        for (int i = 0; i < parentHierarchyDistance; i++)
+                            containingTypeOfDeclaringMethodForSlot = containingTypeOfDeclaringMethodForSlot.BaseType;
+                        declaringMethodForSlot = containingTypeOfDeclaringMethodForSlot.GetMethod(declaringMethodForSlot.Name, declaringMethodForSlot.GetTypicalMethodDefinition().Signature);
+                    }
+
+                    dependencies.Add(new DependencyListEntry(factory.VirtualMethodUse(declaringMethodForSlot), "Reflection virtual invoke VTable entry"));
+                    
+                    //MetadataVirtualMethodAlgorithm.FindSlotDefiningMethodForVirtualMethod(method);
+                }
+
                 dependencies.AddRange(ReflectionVirtualInvokeMapNode.GetVirtualInvokeMapDependencies(factory, method));
             }
 

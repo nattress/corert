@@ -189,7 +189,7 @@ namespace ILCompiler.DependencyAnalysis
                         TypeDesc containingTypeOfDeclaringMethodForSlot = method.OwningType;
                         for (int i = 0; i < parentHierarchyDistance; i++)
                             containingTypeOfDeclaringMethodForSlot = containingTypeOfDeclaringMethodForSlot.BaseType;
-                        declaringMethodForSlot = containingTypeOfDeclaringMethodForSlot.GetMethod(declaringMethodForSlot.Name, declaringMethodForSlot.Signature);
+                        declaringMethodForSlot = containingTypeOfDeclaringMethodForSlot.GetMethod(declaringMethodForSlot.Name, declaringMethodForSlot.GetTypicalMethodDefinition().Signature);
                     }
 
                     int slot = VirtualMethodSlotHelper.GetVirtualMethodSlot(factory, declaringMethodForSlot, factory.Target.Abi != TargetAbi.ProjectN);

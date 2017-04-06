@@ -32,7 +32,7 @@ namespace ILCompiler.Metadata
 
         public override MetadataRecord HandleType(Cts.TypeDesc type)
         {
-            Debug.Assert(!IsBlocked(type));
+            //Debug.Assert(!IsBlocked(type));
 
             MetadataRecord rec;
             if (_types.TryGet(type, out rec))

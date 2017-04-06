@@ -930,6 +930,7 @@ namespace Internal.TypeSystem.Interop
                 _elementMarshaller.MarshallerType = MarshallerType.Element;
                 _elementMarshaller.Return = Return;
                 _elementMarshaller.Context = Context;
+                _elementMarshaller.InteropStateManager = InteropStateManager;
                 _elementMarshaller.ManagedType = ((ArrayType)ManagedType).ElementType;
             }
             _elementMarshaller.In = (direction == MarshalDirection);
@@ -1483,6 +1484,10 @@ namespace Internal.TypeSystem.Interop
             }
 
             // we don't support [IN,OUT] together yet, either IN or OUT
+            if (Out && In)
+            {
+                throw new NotSupportedException("No out and in support");
+            }
             Debug.Assert(!(Out && In));
 
             var safeHandleType = InteropTypes.GetSafeHandleType(Context);

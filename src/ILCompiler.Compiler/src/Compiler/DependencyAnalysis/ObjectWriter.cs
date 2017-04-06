@@ -852,6 +852,10 @@ namespace ILCompiler.DependencyAnalysis
                     {
                         try
                         {
+                            if ("__EEType_Internal_CompilerGenerated___NativeType__RTL_OSVERSIONINFOEX" == definedSymbol.GetMangledName(factory.NameMangler))
+                            {
+                                Debugger.Break();
+                            }
                             _previouslyWrittenNodeNames.Add(definedSymbol.GetMangledName(factory.NameMangler), definedSymbol);
                         }
                         catch (ArgumentException)
