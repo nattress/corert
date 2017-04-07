@@ -8,7 +8,7 @@ using Debug = System.Diagnostics.Debug;
 
 namespace Internal.TypeSystem.Interop
 {
-    public class NativeStructType : MetadataType
+    public class NativeStructType : MetadataType, IPrefixMangledType
     {
         // The managed struct that this type will imitate
         public MetadataType ManagedStructType
@@ -124,6 +124,10 @@ namespace Internal.TypeSystem.Interop
                 return ManagedStructType.Context;
             }
         }
+
+        TypeDesc IPrefixMangledType.BaseType => ManagedStructType;
+
+        string IPrefixMangledType.Prefix => "NativeStructType";
 
         private NativeStructField[] _fields;
         private InteropStateManager _interopStateManager;
