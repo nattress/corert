@@ -421,12 +421,19 @@ namespace ILCompiler
                     if (debugEntry.Type != DebugDirectoryEntryType.CodeView)
                         continue;
 
-                    string candidateFileName = peReader.ReadCodeViewDebugDirectoryData(debugEntry).Path;
-                    if (Path.IsPathRooted(candidateFileName) && File.Exists(candidateFileName))
+                    try
                     {
-                        pdbFilename = candidateFileName;
-                        searchPath = Path.GetDirectoryName(pdbFilename);
-                        break;
+                        string candidateFileName = peReader.ReadCodeViewDebugDirectoryData(debugEntry).Path;
+                        if (Path.IsPathRooted(candidateFileName) && File.Exists(candidateFileName))
+                        {
+                            pdbFilename = candidateFileName;
+                            searchPath = Path.GetDirectoryName(pdbFilename);
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("OpenAssociatedSymbolFile: '{0}', {1}", peFilePath, ex.Message);
                     }
                 }
 
