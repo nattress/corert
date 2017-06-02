@@ -57,7 +57,9 @@ namespace Internal.Reflection.Execution
             DefaultAssemblyNamesForGetType =
                 new String[]
                 {
+#if !CORERT
                     AssemblyBinder.DefaultAssemblyNameForGetType,
+#endif
                 };
 
             ExecutionEnvironment = executionEnvironment;

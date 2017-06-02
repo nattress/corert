@@ -211,7 +211,11 @@ namespace ILCompiler.DependencyAnalysis
                     if (slot == -1)
                     {
                         // This method doesn't have a slot. (At this time, this is only done for the Object.Finalize method)
-                        Debug.Assert(declaringMethodForSlot.Name == "Finalize");
+                        if (declaringMethodForSlot.Name != "Finalize")
+                        {
+                            Console.WriteLine($"Missing slot for {method}. DeclaringMethodForSlot: {declaringMethodForSlot}");
+                        }
+                        //Debug.Assert(declaringMethodForSlot.Name == "Finalize");
                         continue;
                     }
 
