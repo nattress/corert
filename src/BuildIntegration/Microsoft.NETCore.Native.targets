@@ -55,20 +55,25 @@ See the LICENSE file in the project root for more information.
     <SharedLibrary Condition="'$(OS)' != 'Windows_NT'">$(FrameworkLibPath)\libframework$(LibFileExt)</SharedLibrary>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(BuildingFrameworkLibrary) != 'true'">
-    <ManagedBinary Include="$(IntermediateOutputPath)$(TargetName)$(TargetExt)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <IlcCompileInput Include="@(ManagedBinary)" />
-    <IlcReference Include="$(IlcPath)\sdk\*.dll" />
-    <IlcReference Include="$(IlcPath)\framework\*.dll" />
-  </ItemGroup>
-
   <PropertyGroup Condition="'$(IlcCompileDependsOn)'==''">
-    <IlcCompileDependsOn Condition="'$(BuildingFrameworkLibrary)' != 'true'">Compile</IlcCompileDependsOn>
+    <IlcCompileDependsOn Condition="'$(BuildingFrameworkLibrary)' != 'true'">Compile;ComputeIlcCompileInputs</IlcCompileDependsOn>
     <IlcCompileDependsOn Condition="'$(IlcMultiModule)' == 'true' and '$(BuildingFrameworkLibrary)' != 'true'">$(IlcCompileDependsOn);BuildFrameworkLib</IlcCompileDependsOn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <DefaultFrameworkAssemblies Include="$(IlcPath)\sdk\*.dll" />
+    <DefaultFrameworkAssemblies Include="$(IlcPath)\framework\*.dll" />
+  </ItemGroup>
+
+  <Target Name="ComputeIlcCompileInputs">
+
+    <ItemGroup>
+      <ManagedBinary Condition="$(BuildingFrameworkLibrary) != 'true'" Include="$(IntermediateOutputPath)$(TargetName)$(TargetExt)" />
+      <IlcCompileInput Include="@(ManagedBinary)" />
+      <IlcReference Include="@(DefaultFrameworkAssemblies)" />
+    </ItemGroup>
+
+  </Target>
 
   <!--
     BuildFrameworkLib is invoked before IlcCompile in multi-module builds to 

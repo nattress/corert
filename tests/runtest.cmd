@@ -54,6 +54,7 @@ if /i "%1" == "/coreclr"  (
 :ExtRepoTestsOk
     goto ArgLoop
 )
+if /i "%1" == "/realworld" (set CoreRT_RealWorld=true&shift&goto ArgLoop)
 if /i "%1" == "/coreclrsingletest" (set CoreRT_RunCoreCLRTests=true&set CoreRT_CoreCLRTest=%2&shift&shift&goto ArgLoop)
 if /i "%1" == "/mode" (set CoreRT_TestCompileMode=%2&shift&shift&goto ArgLoop)
 if /i "%1" == "/test" (set CoreRT_TestName=%2&shift&shift&goto ArgLoop)
@@ -72,6 +73,7 @@ echo     /mode         : Optionally restrict to a single code generator. Specify
 echo     /test         : Run a single test by folder name (ie, BasicThreading)
 echo     /runtest      : Should just compile or run compiled binary? Specify: true/false. Default: true.
 echo     /coreclr      : Download and run the CoreCLR repo tests
+echo     /realworld    : Download and compile a suite of real-world application code
 echo     /coreclrsingletest ^<absolute\path\to\test.exe^>
 echo                   : Run a single CoreCLR repo test
 echo     /multimodule  : Compile the framework as a .lib and link tests against it (only supports ryujit)
@@ -118,6 +120,7 @@ if /i "%__VSVersion%" == "vs2017" (
 )
 
 if "%CoreRT_RunCoreCLRTests%"=="true" goto :TestExtRepo
+if "%CoreRT_RealWorld%"=="true" goto :TestRealWorld
 
 if /i "%__BuildType%"=="Debug" (
     set __LinkLibs=msvcrtd.lib
@@ -233,9 +236,7 @@ goto :eof
         )
     )
 
-    echo msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%~dp0..\bin\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" !extraArgs! !__SourceFileProj!
-    echo.
-    msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%~dp0..\bin\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" !extraArgs! !__SourceFileProj!
+    call :MSBuildWrapper !extraArgs! !__SourceFileProj!
     endlocal
 
     set __SavedErrorLevel=%ErrorLevel%
@@ -270,32 +271,38 @@ goto :eof
     powershell -Command Write-Host %1 -foreground "red"
     exit /b -1
 
-:RestoreCoreCLRTests
-
-    set TESTS_SEMAPHORE=%CoreRT_TestExtRepo%\init-tests.completed
+::
+:: RestoreRemoteZip
+::
+:: %1 Zip URL
+:: %2 Local Path
+::
+:RestoreRemoteZip
+    set RESTORE_REMOTE_ZIP_URL=%1
+    set RESTORE_LOCAL_PATH=%2
+    set RESTORE_DOWNLOAD_SEMAPHORE=%RESTORE_LOCAL_PATH%\init.completed
 
     :: If sempahore exists do nothing
-    if exist "%TESTS_SEMAPHORE%" (
-      echo Tests are already initialized.
+    if exist "%RESTORE_DOWNLOAD_SEMAPHORE%" (
+      echo Found %1 already present at %2.
       goto :EOF
     )
 
-    if exist "%CoreRT_TestExtRepo%" rmdir /S /Q "%CoreRT_TestExtRepo%"
-    mkdir "%CoreRT_TestExtRepo%"
+    if exist "%RESTORE_LOCAL_PATH%" rmdir /S /Q "%RESTORE_LOCAL_PATH%"
+    mkdir "%RESTORE_LOCAL_PATH%"
 
-    set /p TESTS_REMOTE_URL=< "%~dp0\CoreCLRTestsURL.txt"
-    set TESTS_LOCAL_ZIP=%CoreRT_TestExtRepo%\tests.zip
-    set INIT_TESTS_LOG=%~dp0..\init-tests.log
-    echo Restoring tests (this may take a few minutes)..
-    echo Installing '%TESTS_REMOTE_URL%' to '%TESTS_LOCAL_ZIP%' >> "%INIT_TESTS_LOG%"
-    powershell -NoProfile -ExecutionPolicy unrestricted -Command "$retryCount = 0; $success = $false; do { try { (New-Object Net.WebClient).DownloadFile('%TESTS_REMOTE_URL%', '%TESTS_LOCAL_ZIP%'); $success = $true; } catch { if ($retryCount -ge 6) { throw; } else { $retryCount++; Start-Sleep -Seconds (5 * $retryCount); } } } while ($success -eq $false); Add-Type -Assembly 'System.IO.Compression.FileSystem' -ErrorVariable AddTypeErrors; if ($AddTypeErrors.Count -eq 0) { [System.IO.Compression.ZipFile]::ExtractToDirectory('%TESTS_LOCAL_ZIP%', '%CoreRT_TestExtRepo%') } else { (New-Object -com shell.application).namespace('%CoreRT_TestExtRepo%').CopyHere((new-object -com shell.application).namespace('%TESTS_LOCAL_ZIP%').Items(),16) }" >> "%INIT_TESTS_LOG%"
+    REM set /p TESTS_REMOTE_URL=< "%~dp0\CoreCLRTestsURL.txt"
+    set RESTORE_LOCAL_ZIP=%RESTORE_LOCAL_PATH%\payload.zip
+    set RESTORE_LOG=%RESTORE_LOCAL_PATH%\init.log
+    echo Restoring %RESTORE_REMOTE_ZIP_URL% ...
+    echo Installing '%RESTORE_REMOTE_ZIP_URL%' to '%RESTORE_LOCAL_ZIP%' >> "%RESTORE_LOG%"
+    powershell -NoProfile -ExecutionPolicy unrestricted -Command "$retryCount = 0; $success = $false; do { try { (New-Object Net.WebClient).DownloadFile('%RESTORE_REMOTE_ZIP_URL%', '%RESTORE_LOCAL_ZIP%'); $success = $true; } catch { if ($retryCount -ge 6) { throw; } else { $retryCount++; Start-Sleep -Seconds (5 * $retryCount); } } } while ($success -eq $false); Add-Type -Assembly 'System.IO.Compression.FileSystem' -ErrorVariable AddTypeErrors; if ($AddTypeErrors.Count -eq 0) { [System.IO.Compression.ZipFile]::ExtractToDirectory('%RESTORE_LOCAL_ZIP%', '%RESTORE_LOCAL_PATH%') } else { (New-Object -com shell.application).namespace('%RESTORE_LOCAL_PATH%').CopyHere((new-object -com shell.application).namespace('%RESTORE_LOCAL_ZIP%').Items(),16) }" >> "%RESTORE_LOG%"
     if errorlevel 1 (
-      echo ERROR: Could not download CoreCLR tests correctly. See '%INIT_TESTS_LOG%' for more details. 1>&2
+      echo ERROR: Could not restore %RESTORE_REMOTE_ZIP_URL%. See '%RESTORE_LOG%' for more details. 1>&2
       exit /b 1
     )
 
-    echo Tests restored.
-    echo CoreCLR tests restored from %TESTS_REMOTE_URL% > %TESTS_SEMAPHORE%
+    echo Remote payload downloaded from %RESTORE_REMOTE_ZIP_URL% > %RESTORE_DOWNLOAD_SEMAPHORE%
     exit /b 0
 
 :TestExtRepo
@@ -308,7 +315,10 @@ goto :eof
     echo Running external tests
     if "%CoreRT_TestExtRepo%" == "" (
         set CoreRT_TestExtRepo=%CoreRT_TestRoot%\..\tests_downloaded\CoreCLR
-        call :RestoreCoreCLRTests
+        set /p TESTS_REMOTE_URL=< "%CoreRT_TestRoot%\CoreCLRTestsURL.txt"
+
+        call :RestoreRemoteZip !TESTS_REMOTE_URL! !CoreRT_TestExtRepo!
+        
         if errorlevel 1 (
             exit /b 1
         )
@@ -320,8 +330,8 @@ goto :eof
         set IlcMultiModule=true
         REM Pre-compile shared framework assembly
         echo Compiling framework library
-        echo msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%CoreRT_TestRoot%..\bin\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" /t:CreateLib %CoreRT_TestRoot%\..\src\BuildIntegration\BuildFrameworkNativeObjects.proj
-        msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%CoreRT_TestRoot%..\bin\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" /t:CreateLib %CoreRT_TestRoot%\..\src\BuildIntegration\BuildFrameworkNativeObjects.proj
+        
+        call :MSBuildWrapper /t:CreateLib %CoreRT_TestRoot%\..\src\BuildIntegration\BuildFrameworkNativeObjects.proj
     )
 
     echo.
@@ -353,3 +363,26 @@ goto :eof
     set __SavedErrorLevel=%ErrorLevel%
     popd
     exit /b %__SavedErrorLevel%
+
+:TestRealWorld
+    set CoreRT_TestBinRoot=%CoreRT_TestRoot%..\bin\tests\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\realworld
+
+    if not exist "%CoreRT_TestBinRoot%" (
+        mkdir %CoreRT_TestBinRoot%
+    )
+    set /p TESTS_REMOTE_URL=< "%CoreRT_TestRoot%\CoreCLRTestsURL.txt"
+    call :RestoreRemoteZip %TESTS_REMOTE_URL% C:\git\corert\tests_downloaded\test
+    call :MSBuildWrapper "C:\git\corert\tests_downloaded\aspnet\aspnet.proj"
+    exit /b %__SavedErrorLevel%
+
+::
+:: Invokes MSBuild with the most general set of parameters possible
+::
+::  %1  Project file [.csproj, .proj, .targets, etc]
+::  %*  Extra arguments to MSBuild
+::
+:MSBuildWrapper
+
+    echo msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%~dp0..\bin\Product\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" "/p:CoreRT_TestBinRoot=%CoreRT_TestBinRoot%" %*
+    msbuild /m /ConsoleLoggerParameters:ForceNoAlign "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" "/p:RepoLocalBuild=true" "/p:FrameworkLibPath=%~dp0..\bin\Product\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\lib" "/p:FrameworkObjPath=%~dp0..\bin\obj\%CoreRT_BuildOS%.%CoreRT_BuildArch%.%CoreRT_BuildType%\Framework" "/p:CoreRT_TestBinRoot=%CoreRT_TestBinRoot%" %*
+    exit /b %ErrorLevel%
