@@ -101,6 +101,7 @@ See the LICENSE file in the project root for more information.
       <IlcArg Condition="$(IlcMultiModule) == 'true'" Include="--multifile" />
       <IlcArg Condition="$(Optimize) == 'true'" Include="-O" />
       <IlcArg Condition="$(DebugSymbols) == 'true'" Include="-g" />
+      <IlcArg Condition="$(RdXmlFile) != ''" Include="--rdxml:$(RdXmlFile)" />
     </ItemGroup>
 
     <MakeDir Directories="$(NativeIntermediateOutputPath)" />
