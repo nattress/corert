@@ -9,7 +9,7 @@ using System.Text;
 
 internal class Program
 {
-    //*
+    /*
     [ThreadStatic] private static string TextFileName = @"D:\git\corert\src\ILCompiler\repro\Program.cs";
 
     [ThreadStatic] private static int LineCount = 0;
@@ -219,9 +219,9 @@ internal class Program
             return 1;
         }
     }
-    //*/
+    */
 
-    /*
+    //*
     public static int Main()
     {
         return 100;
