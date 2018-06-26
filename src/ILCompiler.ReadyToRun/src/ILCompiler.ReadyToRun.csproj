@@ -28,6 +28,8 @@
   <ItemGroup>
     <Compile Include="CodeGen\ReadyToRunObjectWriter.cs" />
     <Compile Include="Compiler\DependencyAnalysis\CompilerIdentifierNode.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\FixupConstants.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ImportSectionNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRunCodegenNodeFactory.cs" />
     <Compile Include="Compiler\DependencyAnalysis\HeaderNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\RuntimeFunctionsTableNode.cs" />
