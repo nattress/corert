@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -75,7 +76,7 @@ namespace ILCompiler.DependencyAnalysis
             MethodDesc canonMethod = Method.GetCanonMethodTarget(CanonicalFormKind.Specific);
 
             // Pointer to the canonical body of the method
-            builder.EmitPointerReloc(factory.MethodEntrypoint(canonMethod, _isUnboxingStub));
+            builder.EmitPointerReloc(factory.MethodEntrypoint(canonMethod, default(mdToken), _isUnboxingStub));
 
             // Find out what's the context to use
             ISortableSymbolNode contextParameter;

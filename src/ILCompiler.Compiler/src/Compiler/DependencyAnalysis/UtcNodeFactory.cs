@@ -9,6 +9,8 @@ using System.IO;
 
 using ILCompiler.DependencyAnalysis;
 using ILCompiler.DependencyAnalysisFramework;
+
+using Internal.JitInterface;
 using Internal.Runtime;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
@@ -208,7 +210,7 @@ namespace ILCompiler
             ReadyToRunHeader.Add(MetadataManager.BlobIdToReadyToRunSection(ReflectionMapBlob.CommonFixupsTable), commonFixupsTableNode, commonFixupsTableNode, commonFixupsTableNode.EndSymbol);
         }
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
         {
             if (method.HasCustomAttribute("System.Runtime", "RuntimeImportAttribute"))
             {
@@ -223,7 +225,7 @@ namespace ILCompiler
             return _importedNodeProvider.ImportedMethodCodeNode(this, method, false);
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
         {
             if (method.IsCanonicalMethod(CanonicalFormKind.Any) && !method.HasInstantiation)
             {

@@ -4,6 +4,7 @@
 
 using System;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 
 using ILCompiler;
@@ -182,7 +183,7 @@ namespace Internal.IL
             if (mangledName != null)
                 entryPoint = _compilation.NodeFactory.ExternSymbol(mangledName);
             else
-                entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc);
+                entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc, default(mdToken));
 
             return entryPoint;
         }
@@ -549,7 +550,7 @@ namespace Internal.IL
 
                 if (targetMethod.IsConstructor && targetMethod.OwningType.IsString)
                 {
-                    _dependencies.Add(_factory.StringAllocator(targetMethod), reason);
+                    _dependencies.Add(_factory.StringAllocator(targetMethod, default(Internal.JitInterface.mdToken)), reason);
                 }
                 else if (exactContextNeedsRuntimeLookup)
                 {
@@ -585,7 +586,7 @@ namespace Internal.IL
                     else
                     {
                         Debug.Assert(!forceUseRuntimeLookup);
-                        _dependencies.Add(_factory.MethodEntrypoint(targetMethod), reason);
+                        _dependencies.Add(_factory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
 
                         if (targetMethod.RequiresInstMethodTableArg() && resolvedConstraint)
                         {
@@ -629,7 +630,7 @@ namespace Internal.IL
                             // We don't want array Address method to be modeled in the generic dependency analysis.
                             // The method doesn't actually have runtime determined dependencies (won't do
                             // any generic lookups).
-                            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod), reason);
+                            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
                         }
                     }
                     else if (targetMethod.AcquiresInstMethodTableFromThis())
@@ -638,7 +639,7 @@ namespace Internal.IL
                     }
                     else
                     {
-                        _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod), reason);
+                        _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
                     }
                 }
             }
@@ -930,7 +931,7 @@ namespace Internal.IL
         private void ImportLoadString(int token)
         {
             // If we care, this can include allocating the frozen string node.
-            _dependencies.Add(_factory.SerializedStringObject(""), "ldstr");
+            _dependencies.Add(_factory.SerializedStringObject("", (mdToken)token), "ldstr");
         }
 
         private void ImportBox(int token)

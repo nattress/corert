@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 
 using Internal.IL;
+using Internal.JitInterface;
 using Internal.Runtime;
 using Internal.Text;
 using Internal.TypeSystem;
@@ -231,7 +232,7 @@ namespace ILCompiler.DependencyAnalysis
                     if (impl.OwningType == defType && !impl.IsAbstract)
                     {
                         MethodDesc canonImpl = impl.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                        yield return new CombinedDependencyListEntry(factory.MethodEntrypoint(canonImpl, _type.IsValueType), factory.VirtualMethodUse(decl), "Virtual method");
+                        yield return new CombinedDependencyListEntry(factory.MethodEntrypoint(canonImpl, default(mdToken), _type.IsValueType), factory.VirtualMethodUse(decl), "Virtual method");
                     }
                 }
 
@@ -420,7 +421,7 @@ namespace ILCompiler.DependencyAnalysis
                         if (!MethodHasNonGenericILMethodBody(method))
                             continue;
 
-                        dependencies.Add(factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific)),
+                        dependencies.Add(factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)),
                             "Ensure all methods on type due to CompilationModuleGroup policy");
                     }
                 }
@@ -780,7 +781,7 @@ namespace ILCompiler.DependencyAnalysis
                 if (!implMethod.IsAbstract)
                 {
                     MethodDesc canonImplMethod = implMethod.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                    objData.EmitPointerReloc(factory.MethodEntrypoint(canonImplMethod, implMethod.OwningType.IsValueType));
+                    objData.EmitPointerReloc(factory.MethodEntrypoint(canonImplMethod, default(mdToken), implMethod.OwningType.IsValueType));
                 }
                 else
                 {
@@ -810,7 +811,7 @@ namespace ILCompiler.DependencyAnalysis
             {
                 MethodDesc finalizerMethod = _type.GetFinalizer();
                 MethodDesc canonFinalizerMethod = finalizerMethod.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                objData.EmitPointerReloc(factory.MethodEntrypoint(canonFinalizerMethod));
+                objData.EmitPointerReloc(factory.MethodEntrypoint(canonFinalizerMethod, default(mdToken)));
             }
         }
 
@@ -1238,7 +1239,7 @@ namespace ILCompiler.DependencyAnalysis
                     if (dependencies == null)
                         dependencies = new DependencyList();
 
-                    dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(universalCanonGVMMethod), "USG GVM Method"));
+                    dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(universalCanonGVMMethod, default(mdToken)), "USG GVM Method"));
                 }
             }
         }

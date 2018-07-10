@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Interop;
@@ -106,7 +107,7 @@ namespace ILCompiler.DependencyAnalysis
             Debug.Assert(IsSpecialUnboxingThunk);
 
             MethodDesc nonUnboxingMethod = ((CompilerTypeSystemContext)Method.Context).GetTargetOfSpecialUnboxingThunk(_method);
-            return factory.MethodEntrypoint(nonUnboxingMethod, false);
+            return factory.MethodEntrypoint(nonUnboxingMethod, default(mdToken), false);
         }
 
         public FrameInfo[] FrameInfos => _frameInfos;

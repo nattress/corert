@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 using Internal.NativeFormat;
@@ -68,7 +69,7 @@ namespace ILCompiler.DependencyAnalysis
                 defaultCtor = defaultCtor.GetCanonMethodTarget(CanonicalFormKind.Specific);
 
                 ISymbolNode typeNode = factory.NecessaryTypeSymbol(type);
-                ISymbolNode defaultCtorNode = factory.MethodEntrypoint(defaultCtor, false);
+                ISymbolNode defaultCtorNode = factory.MethodEntrypoint(defaultCtor, default(mdToken), false);
 
                 Vertex vertex = writer.GetTuple(
                     writer.GetUnsignedConstant(_externalReferences.GetIndex(typeNode)),

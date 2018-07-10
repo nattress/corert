@@ -34,6 +34,38 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
         }
 
+        /// <summary>
+        /// This helper structure represents the "coordinates" of a single
+        /// indirection cell in the import tables (index of the import
+        /// section table and offset within the table).
+        /// </summary>
+        private struct FixupCell
+        {
+            public static readonly IComparer<FixupCell> Comparer = new CellComparer();
+
+            public int TableIndex;
+            public int ImportOffset;
+
+            public FixupCell(int tableIndex, int importOffset)
+            {
+                TableIndex = tableIndex;
+                ImportOffset = importOffset;
+            }
+
+            private class CellComparer : IComparer<FixupCell>
+            {
+                public int Compare(FixupCell a, FixupCell b)
+                {
+                    int result = a.TableIndex.CompareTo(b.TableIndex);
+                    if (result == 0)
+                    {
+                        result = a.ImportOffset.CompareTo(b.ImportOffset);
+                    }
+                    return result;
+                }
+            }
+        }
+
         List<EntryPoint> _ridToEntryPoint;
 
         List<byte[]> _uniqueFixups;
@@ -54,42 +86,131 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             sb.Append("__ReadyToRunMethodEntryPointTable");
         }
 
-        public void Add(MethodCodeNode methodNode, int methodIndex)
+        public void Add(MethodCodeNode methodNode, int methodIndex, NodeFactory factory)
         {
+            uint rid;
             if (methodNode.Method is EcmaMethod ecmaMethod)
             {
                 // Strip away the token type bits, keep just the low 24 bits RID
-                int rid = MetadataTokens.GetToken(ecmaMethod.Handle) & 0x00FFFFFF;
-                Debug.Assert(rid != 0);
-                
-                rid--;
-
-                // TODO: how to synthesize method fixups blob?
-                byte[] fixups = null;
-
-                while (_ridToEntryPoint.Count <= rid)
+                rid = SignatureBuilder.RidFromToken(MetadataTokens.GetToken(ecmaMethod.Handle));
+            }
+            else if (methodNode.Method is MethodForInstantiatedType methodOnInstantiatedType)
+            {
+                if (methodOnInstantiatedType.GetTypicalMethodDefinition() is EcmaMethod ecmaTypicalMethod)
                 {
-                    _ridToEntryPoint.Add(EntryPoint.Null);
+                    rid = SignatureBuilder.RidFromToken(MetadataTokens.GetToken(ecmaTypicalMethod.Handle));
                 }
-    
-                int fixupIndex = -1;
-                if (fixups != null)
+                else
                 {
-                    if (!_uniqueFixupIndex.TryGetValue(fixups, out fixupIndex))
-                    {
-                        fixupIndex = _uniqueFixups.Count;
-                        _uniqueFixupIndex.Add(fixups, fixupIndex);
-                        _uniqueFixups.Add(fixups);
-                    }
+                    throw new NotImplementedException();
                 }
-
-
-                _ridToEntryPoint[rid] = new EntryPoint(methodIndex, fixupIndex);
             }
             else
             {
                 throw new NotImplementedException();
             }
+
+            Debug.Assert(rid != 0);
+            rid--;
+
+            byte[] fixups = GetFixupBlob(factory, methodNode);
+
+            while (_ridToEntryPoint.Count <= rid)
+            {
+                _ridToEntryPoint.Add(EntryPoint.Null);
+            }
+    
+            int fixupIndex = -1;
+            if (fixups != null)
+            {
+                if (!_uniqueFixupIndex.TryGetValue(fixups, out fixupIndex))
+                {
+                    fixupIndex = _uniqueFixups.Count;
+                    _uniqueFixupIndex.Add(fixups, fixupIndex);
+                    _uniqueFixups.Add(fixups);
+                }
+            }
+
+
+            _ridToEntryPoint[(int)rid] = new EntryPoint(methodIndex, fixupIndex);
+        }
+
+        private byte[] GetFixupBlob(NodeFactory factory, ObjectNode node)
+        {
+            Relocation[] relocations = node.GetData(factory, relocsOnly: true).Relocs;
+
+            if (relocations == null)
+            {
+                return null;
+            }
+
+            List<FixupCell> fixupCells = null;
+
+            foreach (Relocation reloc in relocations)
+            {
+                if (reloc.Target is Import fixupCell && fixupCell.IsDelayed)
+                {
+                    if (fixupCells == null)
+                    {
+                        fixupCells = new List<FixupCell>();
+                    }
+                    fixupCells.Add(new FixupCell(fixupCell.Table.Index, fixupCell.OffsetFromBeginningOfArray));
+                }
+            }
+
+            if (fixupCells == null)
+            {
+                return null;
+            }
+
+            fixupCells.Sort(FixupCell.Comparer);
+
+            NibbleWriter writer = new NibbleWriter();
+
+            int curTableIndex = -1;
+            int curOffset = 0;
+
+            foreach (FixupCell cell in fixupCells)
+            {
+                Debug.Assert(cell.ImportOffset % factory.Target.PointerSize == 0);
+                int offset = cell.ImportOffset / factory.Target.PointerSize;
+
+                if (cell.TableIndex != curTableIndex)
+                {
+                    // Write delta relative to the previous table index
+                    Debug.Assert(cell.TableIndex > curTableIndex);
+                    if (curTableIndex != -1)
+                    {
+                        writer.WriteUInt(0); // table separator, so add except for the first entry
+                        writer.WriteUInt((uint)(cell.TableIndex - curTableIndex)); // add table index delta
+                    }
+                    else
+                    {
+                        writer.WriteUInt((uint)cell.TableIndex);
+                    }
+                    curTableIndex = cell.TableIndex;
+
+                    // This is the first fixup in the current table.
+                    // We will write it out completely (without delta-encoding)
+                    writer.WriteUInt((uint)offset);
+                }
+                else if (offset != curOffset) // ignore duplicate fixup cells
+                {
+                    // This is not the first entry in the current table.
+                    // We will write out the delta relative to the previous fixup value
+                    int delta = offset - curOffset;
+                    Debug.Assert(delta > 0);
+                    writer.WriteUInt((uint)delta);
+                }
+
+                // future entries for this table would be relative to this rva
+                curOffset = offset;
+            }
+
+            writer.WriteUInt(0); // table separator
+            writer.WriteUInt(0); // fixup list ends
+
+            return writer.ToArray();
         }
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)

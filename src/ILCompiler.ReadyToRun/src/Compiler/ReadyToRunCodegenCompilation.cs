@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection.PortableExecutable;
 
 using Internal.JitInterface;
 using Internal.TypeSystem;
@@ -43,13 +45,18 @@ namespace ILCompiler
 
         protected override void CompileInternal(string outputFile, ObjectDumper dumper)
         {
-            _corInfo = new CorInfoImpl(this, _jitConfigProvider);
+            _corInfo = new CorInfoImpl(this, _jitConfigProvider, CORINFO_RUNTIME_ABI.CORINFO_CORECLR_ABI);
 
-            _dependencyGraph.ComputeMarkedNodes();
-            var nodes = _dependencyGraph.MarkedNodeList;
+            using (FileStream inputFile = File.OpenRead(_inputFilePath))
+            {
+                NodeFactory.PEReader = new PEReader(inputFile);
 
-            NodeFactory.SetMarkingComplete();
-            ReadyToRunObjectWriter.EmitObject(_inputFilePath, outputFile, nodes, NodeFactory);
+                _dependencyGraph.ComputeMarkedNodes();
+                var nodes = _dependencyGraph.MarkedNodeList;
+
+                NodeFactory.SetMarkingComplete();
+                ReadyToRunObjectWriter.EmitObject(outputFile, nodes, NodeFactory);
+            }
         }
 
         protected override void ComputeDependencyNodeDependencies(List<DependencyNodeCore<NodeFactory>> obj)

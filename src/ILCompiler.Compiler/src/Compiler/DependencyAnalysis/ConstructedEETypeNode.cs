@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.Runtime;
 using Internal.TypeSystem;
 using Internal.IL;
@@ -156,7 +157,7 @@ namespace ILCompiler.DependencyAnalysis
             if (defaultCtor != null)
             {
                 dependencyList.Add(new DependencyListEntry(
-                    factory.MethodEntrypoint(defaultCtor.GetCanonMethodTarget(CanonicalFormKind.Specific), closestDefType.IsValueType), 
+                    factory.MethodEntrypoint(defaultCtor.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken), closestDefType.IsValueType), 
                     "DefaultConstructorNode"));
             }
 

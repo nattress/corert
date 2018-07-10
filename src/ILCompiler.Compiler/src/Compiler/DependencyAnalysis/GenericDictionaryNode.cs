@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -160,7 +161,7 @@ namespace ILCompiler.DependencyAnalysis
                 // dependencies in the context of the concrete type that owns this dictionary.
                 yield return new CombinedDependencyListEntry(
                     factory.ShadowConcreteMethod(method),
-                    factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific)),
+                    factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)),
                     "Generic dictionary dependency");
             }
         }

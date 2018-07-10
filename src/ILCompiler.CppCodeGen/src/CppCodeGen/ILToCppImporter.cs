@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 
 using ILCompiler;
@@ -1121,7 +1122,7 @@ namespace Internal.IL
                     if (owningType.IsString)
                     {
                         // String constructors actually look like regular method calls
-                        IMethodNode node = _compilation.NodeFactory.StringAllocator(method);
+                        IMethodNode node = _compilation.NodeFactory.StringAllocator(method, default(mdToken));
                         _dependencies.Add(node);
                         method = node.Method;
                         opcode = ILOpcode.call;
@@ -2709,7 +2710,7 @@ namespace Internal.IL
 
         private void AddMethodReference(MethodDesc method)
         {
-            _dependencies.Add(_nodeFactory.MethodEntrypoint(method));
+            _dependencies.Add(_nodeFactory.MethodEntrypoint(method, default(mdToken)));
         }
 
         private void AddVirtualMethodReference(MethodDesc method)

@@ -5,6 +5,7 @@
 using System;
 
 using Internal.IL;
+using Internal.JitInterface;
 using Internal.TypeSystem;
 using Internal.Text;
 using ILCompiler.DependencyAnalysis;
@@ -221,10 +222,10 @@ namespace ILCompiler
                     invokeThunk = context.GetMethodForInstantiatedType(invokeThunk, instantiatedDelegateType);
 
                 return new DelegateCreationInfo(
-                    factory.MethodEntrypoint(initMethod),
+                    factory.MethodEntrypoint(initMethod, default(mdToken)),
                     targetMethod,
                     TargetKind.ExactCallableAddress,
-                    factory.MethodEntrypoint(invokeThunk));
+                    factory.MethodEntrypoint(invokeThunk, default(mdToken)));
             }
             else
             {
@@ -278,7 +279,7 @@ namespace ILCompiler
                 }
 
                 return new DelegateCreationInfo(
-                    factory.MethodEntrypoint(systemDelegate.GetKnownMethod(initializeMethodName, null)),
+                    factory.MethodEntrypoint(systemDelegate.GetKnownMethod(initializeMethodName, null), default(mdToken)),
                     targetMethod,
                     kind);
             }

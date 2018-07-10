@@ -4,6 +4,7 @@
 
 using System;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -59,7 +60,7 @@ namespace ILCompiler.DependencyAnalysis
 
             foreach (var mappingEntry in factory.MetadataManager.GetStackTraceMapping(factory))
             {
-                objData.EmitReloc(factory.MethodEntrypoint(mappingEntry.Entity), reloc);
+                objData.EmitReloc(factory.MethodEntrypoint(mappingEntry.Entity, default(mdToken)), reloc);
                 objData.EmitInt(mappingEntry.MetadataHandle);
             }
 

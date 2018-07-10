@@ -4,6 +4,7 @@
 
 using System;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 
 using Debug = System.Diagnostics.Debug;
@@ -18,17 +19,17 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
         {
             if (method.IsInternalCall)
             {
                 if (TypeSystemContext.IsSpecialUnboxingThunkTargetMethod(method))
                 {
-                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method));
+                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method), default(mdToken));
                 }
                 else if (method.IsArrayAddressMethod())
                 {
-                    return MethodEntrypoint(((ArrayType)method.OwningType).GetArrayMethod(ArrayMethodKind.AddressWithHiddenArg));
+                    return MethodEntrypoint(((ArrayType)method.OwningType).GetArrayMethod(ArrayMethodKind.AddressWithHiddenArg), default(mdToken));
                 }
                 else if (method.HasCustomAttribute("System.Runtime", "RuntimeImportAttribute"))
                 {
@@ -50,7 +51,7 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
         {
             Debug.Assert(!method.Signature.IsStatic);
 

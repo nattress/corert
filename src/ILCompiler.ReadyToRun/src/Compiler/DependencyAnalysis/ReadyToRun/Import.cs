@@ -2,35 +2,34 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
+using Internal.Text;
 
 namespace ILCompiler.DependencyAnalysis.ReadyToRun
 {
-    public abstract class Import : EmbeddedObjectNode
+    /// <summary>
+    /// This class represents a single indirection cell in one of the import tables.
+    /// </summary>
+    public class Import : EmbeddedObjectNode, ISymbolDefinitionNode
     {
-        public abstract Signature GetSignature(NodeFactory factory);
+        public readonly ImportSectionNode Table;
 
-        public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)
+        internal readonly Signature ImportSignature;
+
+        public Import(ImportSectionNode tableNode, Signature importSignature)
         {
-            var signature = GetSignature(factory);
-            if (signature != null)
-                yield return new DependencyListEntry(signature, "Signature for ready-to-run fixup import");
-        }
-    }
-
-    public class ModuleImport : Import
-    {
-        private readonly ReadyToRunHelperSignature _signature;
-
-        public ModuleImport()
-        {
-            _signature = new ReadyToRunHelperSignature(ReadyToRunHelper.READYTORUN_HELPER_Module);
+            Table = tableNode;
+            ImportSignature = importSignature;
         }
 
-        public override bool StaticDependenciesAreComputed => true;
+        protected override string GetName(NodeFactory factory)
+        {
+            return "Import->" + ImportSignature.GetMangledName(factory.NameMangler);
+        }
 
-        protected override int ClassCode => throw new NotImplementedException();
+        protected override int ClassCode => 667823013;
+
+        public virtual bool IsDelayed => Table.IsDelayed;
 
         public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
         {
@@ -39,11 +38,20 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.EmitZeroPointer();
         }
 
-        public override Signature GetSignature(NodeFactory factory) => _signature;
-        
-        protected override string GetName(NodeFactory context)
+        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
-            return "ModuleImport";
+            sb.Append($@"Fixup: table = {Table.Index}; signature = ");
+            ImportSignature.AppendMangledName(nameMangler, sb);
         }
+
+        public override bool StaticDependenciesAreComputed => true;
+
+        public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)
+        {
+            yield return new DependencyListEntry(ImportSignature, "Signature for ready-to-run fixup import");
+        }
+
+        int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
+        int ISymbolNode.Offset => 0;
     }
 }

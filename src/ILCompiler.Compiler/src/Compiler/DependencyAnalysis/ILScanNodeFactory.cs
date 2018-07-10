@@ -4,6 +4,7 @@
 
 using System;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 
 using Debug = System.Diagnostics.Debug;
@@ -20,14 +21,14 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
         {
             if (method.IsInternalCall)
             {
                 // TODO: come up with a scheme where this can be shared between codegen backends and the scanner
                 if (TypeSystemContext.IsSpecialUnboxingThunkTargetMethod(method))
                 {
-                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method));
+                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method), default(mdToken));
                 }
                 else if (method.IsArrayAddressMethod())
                 {
@@ -53,7 +54,7 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
         {
             Debug.Assert(!method.Signature.IsStatic);
 

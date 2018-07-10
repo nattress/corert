@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -153,7 +154,7 @@ namespace ILCompiler.DependencyAnalysis
                 for (int i = 0; i < _sealedVTableEntries.Count; i++)
                 {
                     MethodDesc canonImplMethod = _sealedVTableEntries[i].GetCanonMethodTarget(CanonicalFormKind.Specific);
-                    objData.EmitReloc(factory.MethodEntrypoint(canonImplMethod, _sealedVTableEntries[i].OwningType.IsValueType), RelocType.IMAGE_REL_BASED_RELPTR32);
+                    objData.EmitReloc(factory.MethodEntrypoint(canonImplMethod, default(mdToken), _sealedVTableEntries[i].OwningType.IsValueType), RelocType.IMAGE_REL_BASED_RELPTR32);
                 }
             }
 

@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 using ILCompiler.DependencyAnalysisFramework;
@@ -37,7 +38,7 @@ namespace ILCompiler.DependencyAnalysis
                         factory.MetadataManager.DynamicInvokeTemplateData.AddDependenciesDueToInvokeTemplatePresence(ref dependencies, factory, canonInvokeStub);
                     }
                     else
-                        dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(canonInvokeStub), "Reflection invoke"));
+                        dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(canonInvokeStub, default(mdToken)), "Reflection invoke"));
                 }
 
                 bool skipUnboxingStubDependency = false;

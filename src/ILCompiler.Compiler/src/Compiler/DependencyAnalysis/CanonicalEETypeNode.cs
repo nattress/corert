@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 using Internal.Runtime;
 
@@ -66,7 +67,7 @@ namespace ILCompiler.DependencyAnalysis
             if (defaultCtor != null)
             {
                 dependencyList.Add(new DependencyListEntry(
-                    factory.MethodEntrypoint(defaultCtor, closestDefType.IsValueType),
+                    factory.MethodEntrypoint(defaultCtor, default(mdToken), closestDefType.IsValueType),
                     "DefaultConstructorNode"));
             }
 

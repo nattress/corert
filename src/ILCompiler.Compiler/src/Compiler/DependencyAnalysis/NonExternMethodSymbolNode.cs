@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using ILCompiler.DependencyAnalysisFramework;
+
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -80,7 +82,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             Debug.Assert(IsSpecialUnboxingThunk);
 
-            return factory.MethodEntrypoint(_method.GetCanonMethodTarget(CanonicalFormKind.Specific), false);
+            return factory.MethodEntrypoint(_method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken), false);
         }
 
         public bool HasCompiledBody => _hasCompiledBody;

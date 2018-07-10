@@ -316,7 +316,7 @@ namespace ILCompiler.PEWriter
         /// </summary>
         /// <param name="data">Block to add</param>
         /// <param name="sectionIndex">Section index</param>
-        public void AddObjectData(ObjectNode.ObjectData objectData, int sectionIndex)
+        public void AddObjectData(ObjectNode.ObjectData objectData, int sectionIndex, string name)
         {
             Section section = _sections[sectionIndex];
 
@@ -326,13 +326,20 @@ namespace ILCompiler.PEWriter
             {
                 alignedOffset = (section.Content.Count + objectData.Alignment - 1) & -objectData.Alignment;
                 int padding = alignedOffset - section.Content.Count;
-
                 if (padding > 0)
                 {
-                    section.Content.WriteBytes(0, padding);
+                    byte paddingByte = 0;
+                    if ((section.Characteristics & SectionCharacteristics.ContainsCode) != 0)
+                    {
+                        // TODO: only use INT3 on x86 & amd64
+                        paddingByte = 0xCC;
+                    }
+
+                    section.Content.WriteBytes(paddingByte, padding);
                 }
             }
 
+            Console.WriteLine($@"S{sectionIndex}+0x{alignedOffset:X4}..{(alignedOffset + objectData.Data.Length):X4}: {objectData.Data.Length:X4} * {name}");
             section.Content.WriteBytes(objectData.Data);
 
             if (objectData.DefinedSymbols != null)

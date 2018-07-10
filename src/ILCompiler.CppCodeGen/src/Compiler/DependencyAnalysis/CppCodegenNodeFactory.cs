@@ -4,6 +4,8 @@
 
 using System;
 using ILCompiler.DependencyAnalysisFramework;
+
+using Internal.JitInterface;
 using Internal.TypeSystem;
 
 namespace ILCompiler.DependencyAnalysis
@@ -26,7 +28,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool IsCppCodegenTemporaryWorkaround => true;
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
         {
             if (CompilationModuleGroup.ContainsMethodBody(method, false))
             {
@@ -38,7 +40,7 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
         {
             return new CppUnboxingStubNode(method);
         }

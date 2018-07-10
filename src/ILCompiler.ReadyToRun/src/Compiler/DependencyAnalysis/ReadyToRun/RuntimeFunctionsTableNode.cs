@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 
 using Internal.NativeFormat;
 using Internal.Runtime;
@@ -14,16 +15,66 @@ using Internal.TypeSystem;
 
 namespace ILCompiler.DependencyAnalysis.ReadyToRun
 {
+    class RuntimeFunctionsGCInfoNode : ObjectNode, ISymbolDefinitionNode
+    {
+        private readonly BlobBuilder _uniqueGCInfo;
+
+        public RuntimeFunctionsGCInfoNode(BlobBuilder uniqueGCInfo)
+        {
+            _uniqueGCInfo = uniqueGCInfo;
+        }
+
+        protected override string GetName(NodeFactory factory)
+        {
+            return "RuntimeFunctionsGCInfo";
+        }
+
+        public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
+        {
+            sb.Append("RuntimeFunctionsGCInfo");
+        }
+
+        public override ObjectData GetData(NodeFactory factory, bool relocsOnly = true)
+        {
+            return new ObjectData(
+                data: _uniqueGCInfo.ToArray(),
+                relocs: null,
+                alignment: 1,
+                definedSymbols: new ISymbolDefinitionNode[] { this });
+        }
+
+        protected override int ClassCode => 316678892;
+
+        public override ObjectNodeSection Section => ObjectNodeSection.ReadOnlyDataSection;
+
+        public override bool StaticDependenciesAreComputed => true;
+
+        public override bool IsShareable => false;
+
+        int ISymbolDefinitionNode.Offset => 0;
+
+        int ISymbolNode.Offset => 0;
+    }
+
     public class RuntimeFunctionsTableNode : HeaderTableNode
     {
-        List<MethodCodeNode> _methodNodes;
-        
+        private readonly List<(MethodCodeNode Method, int GCInfoOffset)> _methodNodes;
+
+        private readonly BlobBuilder _uniqueGCInfoBuilder;
+        private readonly Dictionary<byte[], int> _uniqueGCInfoOffsets;
+
+        private readonly RuntimeFunctionsGCInfoNode _gcInfoNode;
+
         public RuntimeFunctionsTableNode(TargetDetails target)
             : base(target)
         {
-            _methodNodes = new List<MethodCodeNode>();
+            _methodNodes = new List<(MethodCodeNode Method, int GCInfoOffset)>();
+            _uniqueGCInfoBuilder = new BlobBuilder();
+            _uniqueGCInfoOffsets = new Dictionary<byte[], int>(ByteArrayComparer.Instance);
+
+            _gcInfoNode = new RuntimeFunctionsGCInfoNode(_uniqueGCInfoBuilder);
         }
-        
+
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
@@ -33,7 +84,18 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public int Add(MethodCodeNode method)
         {
             int methodIndex = _methodNodes.Count;
-            _methodNodes.Add(method);
+
+            byte[] gcInfo = method.GCInfo;
+            int gcInfoLocalOffset;
+            if (!_uniqueGCInfoOffsets.TryGetValue(gcInfo, out gcInfoLocalOffset))
+            {
+                gcInfoLocalOffset = _uniqueGCInfoBuilder.Count;
+                _uniqueGCInfoBuilder.WriteBytes(gcInfo);
+                _uniqueGCInfoOffsets.Add(gcInfo, gcInfoLocalOffset);
+            }
+
+            _methodNodes.Add((Method: method, GCInfoOffset: gcInfoLocalOffset));
+
             return methodIndex;
         }
 
@@ -44,40 +106,27 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             // Add the symbol representing this object node
             runtimeFunctionsBuilder.AddSymbol(this);
 
-            int gcInfoGlobalOffset = (Target.Architecture == TargetArchitecture.X64 ? 3 : 2) * sizeof(int) * _methodNodes.Count;
-            ArrayBuilder<byte> uniqueGCInfoBuilder = new ArrayBuilder<byte>();
-            Dictionary<byte[], int> uniqueGCInfoOffsets = new Dictionary<byte[], int>(ByteArrayComparer.Instance);
-
-            foreach (MethodCodeNode methodNode in _methodNodes)
+            if (relocsOnly)
             {
-                // StartOffset of the runtime function
-                runtimeFunctionsBuilder.EmitReloc(methodNode, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: 0);
-                if (Target.Architecture == TargetArchitecture.X64)
-                {
-                    // On Amd64, the 2nd word contains the EndOffset of the runtime function
-                    int methodLength = methodNode.GetData(factory, relocsOnly).Data.Length;
-                    runtimeFunctionsBuilder.EmitReloc(methodNode, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: methodLength);
-                }
-                // Unify GC info of the runtime function
-                byte[] gcInfo = methodNode.GCInfo;
-                int gcInfoLocalOffset;
-                if (!uniqueGCInfoOffsets.TryGetValue(gcInfo, out gcInfoLocalOffset))
-                {
-                    gcInfoLocalOffset = uniqueGCInfoBuilder.Count;
-                    uniqueGCInfoBuilder.Append(gcInfo);
-                    uniqueGCInfoOffsets.Add(gcInfo, gcInfoLocalOffset);
-                }
-                // Emit the GC info RVA
-                runtimeFunctionsBuilder.EmitReloc(this, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: gcInfoGlobalOffset + gcInfoLocalOffset);
+                // Just make sure to mark the GC info as a dependent node
+                runtimeFunctionsBuilder.EmitReloc(_gcInfoNode, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: 0);
             }
-
-            // Note: this algorithm always emits the GC info "above" the runtime function
-            // table. If we want to be able to separate these two tables completely, we'll
-            // likely need a separate node for the GC info.
-            Debug.Assert(runtimeFunctionsBuilder.CountBytes == gcInfoGlobalOffset);
-
-            // For some weird reason, ObjectDataBuilder.EmitBytes(ArrayBuilder<byte>) is marked as internal.
-            runtimeFunctionsBuilder.EmitBytes(uniqueGCInfoBuilder.ToArray());
+            else
+            {
+                foreach ((MethodCodeNode Method, int GCInfoOffset) methodAndOffset in _methodNodes)
+                {
+                    // StartOffset of the runtime function
+                    runtimeFunctionsBuilder.EmitReloc(methodAndOffset.Method, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: 0);
+                    if (Target.Architecture == TargetArchitecture.X64)
+                    {
+                        // On Amd64, the 2nd word contains the EndOffset of the runtime function
+                        int methodLength = methodAndOffset.Method.GetData(factory, relocsOnly).Data.Length;
+                        runtimeFunctionsBuilder.EmitReloc(methodAndOffset.Method, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: methodLength);
+                    }
+                    // Emit the GC info RVA
+                    runtimeFunctionsBuilder.EmitReloc(_gcInfoNode, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: methodAndOffset.GCInfoOffset);
+                }
+            }
 
             return runtimeFunctionsBuilder.ToObjectData();
         }

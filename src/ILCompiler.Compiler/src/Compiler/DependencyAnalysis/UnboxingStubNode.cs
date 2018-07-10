@@ -4,6 +4,7 @@
 
 using System;
 
+using Internal.JitInterface;
 using Internal.Text;
 using Internal.TypeSystem;
 
@@ -50,7 +51,7 @@ namespace ILCompiler.DependencyAnalysis
 
         private ISymbolNode GetUnderlyingMethodEntrypoint(NodeFactory factory)
         {
-            ISymbolNode node = factory.MethodEntrypoint(Method);
+            ISymbolNode node = factory.MethodEntrypoint(Method, default(mdToken));
             if (node is RuntimeDecodableJumpStubNode)
             {
                 return ((RuntimeDecodableJumpStubNode)node).Target;

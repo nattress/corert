@@ -10,6 +10,7 @@ using System.Collections.Immutable;
 
 using Internal.Compiler;
 using Internal.IL;
+using Internal.JitInterface;
 using Internal.TypeSystem;
 using Internal.TypeSystem.Ecma;
 using Internal.Metadata.NativeFormat.Writer;
@@ -829,7 +830,7 @@ namespace ILCompiler
 
                 if (canonicalMethod.OwningType.IsCanonicalSubtype(CanonicalFormKind.Any))
                 {
-                    if (!factory.MethodEntrypoint(canonicalMethod, true).Marked)
+                    if (!factory.MethodEntrypoint(canonicalMethod, default(mdToken), true).Marked)
                         return false;
                 }
             }

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Internal.JitInterface;
 using Internal.TypeSystem;
 using ILCompiler;
 using LLVMSharp;
@@ -1025,7 +1026,7 @@ namespace Internal.IL
                 if (newType.IsString)
                 {
                     // String constructors actually look like regular method calls
-                    IMethodNode node = _compilation.NodeFactory.StringAllocator(callee);
+                    IMethodNode node = _compilation.NodeFactory.StringAllocator(callee, default(mdToken));
                     _dependencies.Add(node);
                     callee = node.Method;
                     opcode = ILOpcode.call;
@@ -1424,7 +1425,7 @@ namespace Internal.IL
 
         private void AddMethodReference(MethodDesc method)
         {
-            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(method));
+            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(method, default(mdToken)));
         }
 
         private void AddVirtualMethodReference(MethodDesc method)
@@ -2504,7 +2505,7 @@ namespace Internal.IL
             TypeDesc stringType = this._compilation.TypeSystemContext.GetWellKnownType(WellKnownType.String);
 
             string str = (string)_methodIL.GetObject(token);
-            ISymbolNode node = _compilation.NodeFactory.SerializedStringObject(str);
+            ISymbolNode node = _compilation.NodeFactory.SerializedStringObject(str, (mdToken)token);
             LLVMValueRef stringDataPointer = LoadAddressOfSymbolNode(node);
             _dependencies.Add(node);
             _stack.Push(new ExpressionEntry(GetStackValueKind(stringType), String.Empty, stringDataPointer, stringType));
