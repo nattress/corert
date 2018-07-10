@@ -58,16 +58,8 @@ namespace ILCompiler.DependencyAnalysis
                 _rdataSectionIndex = sectionBuilder.AddSection(".rdata", SectionCharacteristics.ContainsInitializedData | SectionCharacteristics.MemRead, 512);
                 _dataSectionIndex = sectionBuilder.AddSection(".data", SectionCharacteristics.ContainsInitializedData | SectionCharacteristics.MemWrite | SectionCharacteristics.MemRead, 512);
 
-                sectionBuilder.SetReadyToRunHeaderTable(_nodeFactory.Header, _nodeFactory.Header.GetData(_nodeFactory).Data.Length);
-
                 foreach (var depNode in _nodes)
                 {
-                    if (depNode is MethodCodeNode methodNode)
-                    {
-                        int methodIndex = _nodeFactory.RuntimeFunctionsTable.Add(methodNode);
-                        _nodeFactory.MethodEntryPointTable.Add(methodNode, methodIndex, _nodeFactory);
-                    }
-
                     if (depNode is EETypeNode eeTypeNode)
                     {
                         _nodeFactory.TypesTable.Add(eeTypeNode);
@@ -83,12 +75,8 @@ namespace ILCompiler.DependencyAnalysis
                     if (node == null)
                         continue;
 
-                    // TODO: Figure out the proper solution for this. This call returns true for StringImports
-                    // when there are no strings in the app - we have, however, already added the node to the import tables
-                    // in the R2R header node and their resolution fails if the node fails to emit.
-                    //
-                    // if (node.ShouldSkipEmittingObjectNode(_nodeFactory))
-                    //    continue;
+                    if (node.ShouldSkipEmittingObjectNode(_nodeFactory))
+                        continue;
 
                     ObjectData nodeContents = node.GetData(_nodeFactory);
 #if DEBUG
@@ -145,6 +133,8 @@ namespace ILCompiler.DependencyAnalysis
 
                     sectionBuilder.AddObjectData(nodeContents, targetSectionIndex, name);
                 }
+
+                sectionBuilder.SetReadyToRunHeaderTable(_nodeFactory.Header, _nodeFactory.Header.GetData(_nodeFactory).Data.Length);
 
                 using (var peStream = File.Create(_objectFilePath))
                 {

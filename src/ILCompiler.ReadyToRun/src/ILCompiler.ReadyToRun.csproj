@@ -27,6 +27,8 @@
   
   <ItemGroup>
     <Compile Include="CodeGen\ReadyToRunObjectWriter.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\MethodWithGCInfo.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\MethodGCInfoNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\CompilerIdentifierNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\DelayLoadHelper.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\FixupConstants.cs" />
@@ -52,6 +54,7 @@
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\TypesTableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\ImportSectionsTableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\ByteArrayComparer.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\RuntimeFunctionsGCInfoNode.cs" />
     <Compile Include="Compiler\ReadyToRunCodegenCompilation.cs" />
     <Compile Include="Compiler\ReadyToRunCodegenCompilationBuilder.cs" />
     <Compile Include="Compiler\ReadyToRunNodeMangler.cs" />

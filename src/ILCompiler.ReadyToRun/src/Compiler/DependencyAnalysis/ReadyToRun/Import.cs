@@ -40,7 +40,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
-            sb.Append($@"Fixup: table = {Table.Index}; signature = ");
+            sb.Append($@"Fixup: table = ");
+            sb.Append(Table.Name);
+            sb.Append("; Signature: ");
             ImportSignature.AppendMangledName(nameMangler, sb);
         }
 

@@ -51,7 +51,6 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
     public class ImportSectionNode : EmbeddedObjectNode
     {
-        private readonly int _sectionIndex;
         private readonly ArrayOfEmbeddedDataNode<Import> _imports;
         // TODO: annoying - today there's no way to put signature RVA's into R/O data section
         private readonly ArrayOfEmbeddedPointersNode<Signature> _signatures;
@@ -60,10 +59,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         private readonly byte _entrySize;
         private readonly string _name;
 
-        public ImportSectionNode(int sectionIndex, string name, CorCompileImportType importType, CorCompileImportFlags flags, byte entrySize)
+        public ImportSectionNode(string name, CorCompileImportType importType, CorCompileImportFlags flags, byte entrySize)
         {
-            _sectionIndex = sectionIndex;
-
             _name = name;
             _type = importType;
             _flags = flags;
@@ -79,10 +76,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             _signatures.AddEmbeddedObject(new RvaEmbeddedPointerIndirectionNode<Signature>(import.ImportSignature));
         }
 
+        public string Name => _name;
+
         public bool IsDelayed => (_flags & CorCompileImportFlags.CORCOMPILE_IMPORT_FLAGS_EAGER) == 0;
-
-
-        public int Index => _sectionIndex;
 
         public override bool StaticDependenciesAreComputed => true;
 
@@ -90,6 +86,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
         {
+            if (!relocsOnly && _imports.ShouldSkipEmittingObjectNode(factory))
+            {
+                // Don't emit import section node at all if there are no entries in it
+                return;
+            }
+
             dataBuilder.EmitReloc(_imports.StartSymbol, RelocType.IMAGE_REL_BASED_ADDR32NB, 0);
             if (!relocsOnly)
                 dataBuilder.EmitInt(_imports.GetData(factory, false).Data.Length);

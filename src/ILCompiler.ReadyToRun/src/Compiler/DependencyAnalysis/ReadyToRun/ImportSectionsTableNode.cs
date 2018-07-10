@@ -24,14 +24,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         protected override void GetElementDataForNodes(ref ObjectDataBuilder builder, NodeFactory factory, bool relocsOnly)
         {
             builder.RequireInitialPointerAlignment();
-
-            foreach (ImportSectionNode node in NodesList)
-            {
-                if (!relocsOnly)
-                    node.InitializeOffsetFromBeginningOfArray(builder.CountBytes);
-
-                node.EncodeData(ref builder, factory, relocsOnly);
-            }
+            base.GetElementDataForNodes(ref builder, factory, relocsOnly);
         }
 
         protected override int ClassCode => 787556329;

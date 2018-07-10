@@ -48,6 +48,8 @@ namespace ILCompiler.DependencyAnalysis
 
         public RuntimeFunctionsTableNode RuntimeFunctionsTable;
 
+        private RuntimeFunctionsGCInfoNode _runtimeFunctionsGCInfo;
+
         public MethodEntryPointTableNode MethodEntryPointTable;
 
         public InstanceEntryPointTableNode InstanceEntryPointTable;
@@ -70,7 +72,12 @@ namespace ILCompiler.DependencyAnalysis
         {
             if (CompilationModuleGroup.ContainsMethodBody(method, false))
             {
-                return new MethodCodeNode(method);
+                MethodWithGCInfo newMethodNode = new MethodWithGCInfo(method);
+                _runtimeFunctionsGCInfo.AddEmbeddedObject(newMethodNode.GCInfoNode);
+                int methodIndex = RuntimeFunctionsTable.Add(newMethodNode, newMethodNode.GCInfoNode);
+                MethodEntryPointTable.Add(newMethodNode, methodIndex, this);
+
+                return newMethodNode;
             }
             else
             {
@@ -359,6 +366,9 @@ namespace ILCompiler.DependencyAnalysis
             RuntimeFunctionsTable = new RuntimeFunctionsTableNode(Target);
             Header.Add(Internal.Runtime.ReadyToRunSectionType.RuntimeFunctions, RuntimeFunctionsTable, RuntimeFunctionsTable);
 
+            _runtimeFunctionsGCInfo = new RuntimeFunctionsGCInfoNode();
+            graph.AddRoot(_runtimeFunctionsGCInfo, "GC info is always generated");
+
             MethodEntryPointTable = new MethodEntryPointTableNode(Target);
             Header.Add(Internal.Runtime.ReadyToRunSectionType.MethodDefEntryPoints, MethodEntryPointTable, MethodEntryPointTable);
 
@@ -371,10 +381,7 @@ namespace ILCompiler.DependencyAnalysis
             ImportSectionsTable = new ImportSectionsTableNode(Target);
             Header.Add(Internal.Runtime.ReadyToRunSectionType.ImportSections, ImportSectionsTable, ImportSectionsTable.StartSymbol);
 
-            int tableIndex = 0;
-
             EagerImports = new ImportSectionNode(
-                tableIndex++, 
                 "EagerImports", 
                 CorCompileImportType.CORCOMPILE_IMPORT_TYPE_UNKNOWN, 
                 CorCompileImportFlags.CORCOMPILE_IMPORT_FLAGS_EAGER,
@@ -387,7 +394,6 @@ namespace ILCompiler.DependencyAnalysis
             EagerImports.AddImport(this, ModuleImport);
 
             MethodImports = new ImportSectionNode(
-                tableIndex++,
                 "MethodImports",
                 CorCompileImportType.CORCOMPILE_IMPORT_TYPE_STUB_DISPATCH,
                 CorCompileImportFlags.CORCOMPILE_IMPORT_FLAGS_PCODE,
@@ -395,7 +401,6 @@ namespace ILCompiler.DependencyAnalysis
             ImportSectionsTable.AddEmbeddedObject(MethodImports);
 
             HelperImports = new ImportSectionNode(
-                tableIndex++,
                 "HelperImports",
                 CorCompileImportType.CORCOMPILE_IMPORT_TYPE_UNKNOWN,
                 CorCompileImportFlags.CORCOMPILE_IMPORT_FLAGS_PCODE,
@@ -403,18 +408,18 @@ namespace ILCompiler.DependencyAnalysis
             ImportSectionsTable.AddEmbeddedObject(HelperImports);
 
             StringImports = new ImportSectionNode(
-                tableIndex++,
                 "StringImports",
                 CorCompileImportType.CORCOMPILE_IMPORT_TYPE_STRING_HANDLE,
                 CorCompileImportFlags.CORCOMPILE_IMPORT_FLAGS_UNKNOWN,
                 (byte)Target.PointerSize);
             ImportSectionsTable.AddEmbeddedObject(StringImports);
 
-            graph.AddRoot(Header, "ReadyToRunHeader is always generated");
             graph.AddRoot(ModuleImport, "Module import is always generated");
             graph.AddRoot(MethodImports, "Method imports are always generated");
             graph.AddRoot(HelperImports, "Helper imports are always generated");
             graph.AddRoot(StringImports, "String imports are always generated");
+            graph.AddRoot(ImportSectionsTable, "Import sections table is always generated");
+            graph.AddRoot(Header, "ReadyToRunHeader is always generated");
         }
 
         public IMethodNode GetOrAddImportedMethodNode(MethodDesc method, bool unboxingStub, mdToken token)

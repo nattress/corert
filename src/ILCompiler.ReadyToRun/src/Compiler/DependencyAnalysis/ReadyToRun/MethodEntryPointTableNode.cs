@@ -20,17 +20,17 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
     {
         private struct EntryPoint
         {
-            public static EntryPoint Null = new EntryPoint(-1, -1);
-            
+            public static EntryPoint Null = new EntryPoint(-1, null);
+
             public readonly int MethodIndex;
-            public readonly int FixupIndex;
+            public readonly ObjectNode Method;
 
             public bool IsNull => (MethodIndex < 0);
             
-            public EntryPoint(int methodIndex, int fixupIndex)
+            public EntryPoint(int methodIndex, ObjectNode method)
             {
                 MethodIndex = methodIndex;
-                FixupIndex = fixupIndex;
+                Method = method;
             }
         }
 
@@ -68,16 +68,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         List<EntryPoint> _ridToEntryPoint;
 
-        List<byte[]> _uniqueFixups;
-        Dictionary<byte[], int> _uniqueFixupIndex;
-        
         public MethodEntryPointTableNode(TargetDetails target)
             : base(target)
         {
             _ridToEntryPoint = new List<EntryPoint>();
-
-            _uniqueFixups = new List<byte[]>();
-            _uniqueFixupIndex = new Dictionary<byte[], int>(ByteArrayComparer.Instance);
         }
         
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
@@ -113,26 +107,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             Debug.Assert(rid != 0);
             rid--;
 
-            byte[] fixups = GetFixupBlob(factory, methodNode);
-
             while (_ridToEntryPoint.Count <= rid)
             {
                 _ridToEntryPoint.Add(EntryPoint.Null);
             }
-    
-            int fixupIndex = -1;
-            if (fixups != null)
-            {
-                if (!_uniqueFixupIndex.TryGetValue(fixups, out fixupIndex))
-                {
-                    fixupIndex = _uniqueFixups.Count;
-                    _uniqueFixupIndex.Add(fixups, fixupIndex);
-                    _uniqueFixups.Add(fixups);
-                }
-            }
 
-
-            _ridToEntryPoint[(int)rid] = new EntryPoint(methodIndex, fixupIndex);
+            _ridToEntryPoint[(int)rid] = new EntryPoint(methodIndex, methodNode);
         }
 
         private byte[] GetFixupBlob(NodeFactory factory, ObjectNode node)
@@ -154,7 +134,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                     {
                         fixupCells = new List<FixupCell>();
                     }
-                    fixupCells.Add(new FixupCell(fixupCell.Table.Index, fixupCell.OffsetFromBeginningOfArray));
+                    fixupCells.Add(new FixupCell(fixupCell.Table.IndexFromBeginningOfArray, fixupCell.OffsetFromBeginningOfArray));
                 }
             }
 
@@ -215,19 +195,35 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
         {
-            NativeWriter arrayWriter = new NativeWriter();
+            if (relocsOnly)
+            {
+                return new ObjectData(Array.Empty<byte>(), Array.Empty<Relocation>(), 1, Array.Empty<ISymbolDefinitionNode>());
+            }
 
-            Section arraySection = arrayWriter.NewSection();
+            NativeWriter writer = new NativeWriter();
+
+            Section arraySection = writer.NewSection();
             VertexArray vertexArray = new VertexArray(arraySection);
             arraySection.Place(vertexArray);
-            BlobVertex[] fixupBlobs = PlaceBlobs(arraySection, _uniqueFixups);
+
+            Section fixupSection = writer.NewSection();
+
+            Dictionary<byte[], BlobVertex> uniqueFixups = new Dictionary<byte[], BlobVertex>(ByteArrayComparer.Instance);
 
             for (int rid = 0; rid < _ridToEntryPoint.Count; rid++)
             {
                 EntryPoint entryPoint = _ridToEntryPoint[rid];
                 if (!entryPoint.IsNull)
                 {
-                    BlobVertex fixupBlobVertex = (entryPoint.FixupIndex >= 0 ? fixupBlobs[entryPoint.FixupIndex] : null);
+                    byte[] fixups = GetFixupBlob(factory, entryPoint.Method);
+
+                    BlobVertex fixupBlobVertex = null;
+                    if (fixups != null && !uniqueFixups.TryGetValue(fixups, out fixupBlobVertex))
+                    {
+                        fixupBlobVertex = new BlobVertex(fixups);
+                        fixupSection.Place(fixupBlobVertex);
+                        uniqueFixups.Add(fixups, fixupBlobVertex);
+                    }
                     EntryPointVertex entryPointVertex = new EntryPointVertex((uint)entryPoint.MethodIndex, fixupBlobVertex);
                     vertexArray.Set(rid, entryPointVertex);
                 }
@@ -236,24 +232,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             vertexArray.ExpandLayout();
 
             MemoryStream arrayContent = new MemoryStream();
-            arrayWriter.Save(arrayContent);
+            writer.Save(arrayContent);
             return new ObjectData(
                 data: arrayContent.ToArray(),
                 relocs: null,
                 alignment: 8,
                 definedSymbols: new ISymbolDefinitionNode[] { this });
-        }
-
-        private static BlobVertex[] PlaceBlobs(Section section, List<byte[]> blobs)
-        {
-            BlobVertex[] blobVertices = new BlobVertex[blobs.Count];
-            for (int blobIndex = 0; blobIndex < blobs.Count; blobIndex++)
-            {
-                BlobVertex blobVertex = new BlobVertex(blobs[blobIndex]);
-                section.Place(blobVertex);
-                blobVertices[blobIndex] = blobVertex;
-            }
-            return blobVertices;
         }
 
         protected override int ClassCode => 787556329;

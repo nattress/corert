@@ -51,28 +51,37 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             {
                 case TargetArchitecture.X64:
                     {
-                        builder.RequireInitialAlignment(8);
+                        if (!relocsOnly)
+                        {
+                            builder.RequireInitialAlignment(8);
 
-                        // lea rax, [pCell]
-                        builder.EmitByte(0x48);
-                        builder.EmitByte(0x8D);
-                        builder.EmitByte(0x05);
+                            // lea rax, [pCell]
+                            builder.EmitByte(0x48);
+                            builder.EmitByte(0x8D);
+                            builder.EmitByte(0x05);
+                        }
                         builder.EmitReloc(_instanceCell, RelocType.IMAGE_REL_BASED_REL32);
 
-                        // push table index
-                        builder.EmitByte(0x6A);
-                        builder.EmitByte((byte)_instanceCell.Table.Index);
+                        if (!relocsOnly)
+                        {
+                            // push table index
+                            builder.EmitByte(0x6A);
+                            builder.EmitByte((byte)_instanceCell.Table.IndexFromBeginningOfArray);
 
-                        // push [module]
-                        builder.EmitByte(0xFF);
-                        builder.EmitByte(0x35);
+                            // push [module]
+                            builder.EmitByte(0xFF);
+                            builder.EmitByte(0x35);
+                        }
                         builder.EmitReloc(_moduleImport, RelocType.IMAGE_REL_BASED_REL32);
 
-                        // TODO: additional tricks regarding UNIX AMD64 ABI
+                        if (!relocsOnly)
+                        {
+                            // TODO: additional tricks regarding UNIX AMD64 ABI
 
-                        // jmp [helper]
-                        builder.EmitByte(0xFF);
-                        builder.EmitByte(0x25);
+                            // jmp [helper]
+                            builder.EmitByte(0xFF);
+                            builder.EmitByte(0x25);
+                        }
                         builder.EmitReloc(_helperCell, RelocType.IMAGE_REL_BASED_REL32);
 
                         break;
