@@ -446,5 +446,17 @@ namespace ILCompiler.DependencyAnalysis
             }
             return methodImport;
         }
+
+        public override IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IMethodNode ShadowConcreteMethod(MethodDesc method, mdToken token, bool isUnboxingStub = false)
+        {
+            return MethodEntrypoint(method, token, isUnboxingStub);
+        }
+
+
     }
 }

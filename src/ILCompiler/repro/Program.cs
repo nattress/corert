@@ -135,6 +135,56 @@ internal class Program
         return listOfInt.Count == 0;
     }
 
+    private static bool ManipulateListOfInt()
+    {
+        List<int> listOfInt = new List<int>();
+        const int ItemCount = 100;
+        for (int index = ItemCount; index > 0; index--)
+        {
+            listOfInt.Add(index);
+        }
+        listOfInt.Sort();
+        //listOfInt.Sort((a, b) => a.CompareTo(b));
+        for (int index = 0; index < listOfInt.Count; index++)
+        {
+            Console.Write($@"{listOfInt[index]} ");
+            if (index > 0 && listOfInt[index] <= listOfInt[index - 1])
+            {
+                // The list should be monotonically increasing now
+                return false;
+            }
+        }
+        return listOfInt.Count == ItemCount;
+    }
+
+    private static bool ConstructListOfString()
+    {
+        List<string> listOfString = new List<string>();
+        return listOfString.Count == 0;
+    }
+
+    private static bool ManipulateListOfString()
+    {
+        List<string> listOfString = new List<string>();
+        const int ItemCount = 100;
+        for (int index = ItemCount; index > 0; index--)
+        {
+            listOfString.Add(index.ToString());
+        }
+        listOfString.Sort();
+        //listOfInt.Sort((a, b) => a.CompareTo(b));
+        for (int index = 0; index < listOfString.Count; index++)
+        {
+            Console.Write($@"{listOfString[index]} ");
+            if (index > 0 && listOfString[index].CompareTo(listOfString[index - 1]) <= 0)
+            {
+                // The list should be monotonically increasing now
+                return false;
+            }
+        }
+        return listOfString.Count == ItemCount;
+    }
+
     public static int Main()
     {
         const int Success = 1;
@@ -154,6 +204,9 @@ internal class Program
         TestCounts[ReadAllText() ? Success : Failure]++;
         TestCounts[StreamReaderReadLine() ? Success : Failure]++;
         TestCounts[ConstructListOfInt() ? Success : Failure]++;
+        TestCounts[ManipulateListOfInt() ? Success : Failure]++;
+        TestCounts[ConstructListOfString() ? Success : Failure]++;
+        TestCounts[ManipulateListOfString() ? Success : Failure]++;
 
         if (TestCounts[Failure] == 0)
         {

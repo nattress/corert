@@ -833,9 +833,14 @@ namespace ILCompiler.DependencyAnalysis
         }
 
         private NodeCache<MethodKey, IMethodNode> _shadowConcreteMethods;
-        public IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
+        public virtual IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
         {
             return _shadowConcreteMethods.GetOrAdd(new MethodKey(method, isUnboxingStub));
+        }
+
+        public virtual IMethodNode ShadowConcreteMethod(MethodDesc method, mdToken token, bool isUnboxingStub = false)
+        {
+            return ShadowConcreteMethod(method, token, isUnboxingStub);
         }
 
         private NodeCache<MethodDesc, IMethodNode> _runtimeDeterminedMethods;

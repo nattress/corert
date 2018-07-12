@@ -3271,7 +3271,7 @@ namespace Internal.JitInterface
                         if (!referencingArrayAddressMethod)
                         {
                             pResult.codePointerOrStubLookup.constLookup = 
-                                CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod));
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod, pResolvedToken.token));
                         }
                         else
                         {
@@ -3285,7 +3285,7 @@ namespace Internal.JitInterface
                     else if (targetMethod.AcquiresInstMethodTableFromThis())
                     {
                         pResult.codePointerOrStubLookup.constLookup = 
-                            CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod));
+                            CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod, pResolvedToken.token));
                     }
                     else
                     {
