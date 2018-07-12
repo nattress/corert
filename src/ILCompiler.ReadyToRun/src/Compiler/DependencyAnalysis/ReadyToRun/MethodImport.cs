@@ -14,18 +14,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
     {
         private readonly MethodDesc _methodDesc;
 
+        private readonly mdToken _token;
+
         public MethodImport(ImportSectionNode table, MethodDesc methodDesc, mdToken token)
             : base(table, new MethodImportSignature(methodDesc, token))
         {
             _methodDesc = methodDesc;
-        }
-
-        public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
-        {
-            if (Marked)
-            {
-                base.EncodeData(ref dataBuilder, factory, relocsOnly);
-            }
+            _token = token;
         }
 
         public MethodDesc Method => _methodDesc;
@@ -34,9 +29,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         int ISortableSymbolNode.CompareToImpl(ISortableSymbolNode other, CompilerComparer comparer)
         {
-            MethodImport methodFixupCell = (MethodImport)other;
-            // TODO: what are we supposed to do here?
-            return 0;
+            return _token.CompareTo(((MethodImport)other)._token);
         }
 
         protected override string GetName(NodeFactory context)

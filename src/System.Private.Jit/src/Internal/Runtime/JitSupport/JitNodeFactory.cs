@@ -9,6 +9,7 @@ using Internal.Runtime.JitSupport;
 
 using Internal.TypeSystem;
 using Internal.IL;
+using Internal.JitInterface;
 using ILCompiler.DependencyAnalysisFramework;
 
 namespace ILCompiler.DependencyAnalysis
@@ -76,6 +77,17 @@ namespace ILCompiler.DependencyAnalysis
 
         public BlobNode ReadOnlyDataBlob(string s, byte[] b, int align) { throw new NotImplementedException(); }
         public ISymbolNode ReadyToRunHelper(ReadyToRunHelperId id, Object target) { throw new NotImplementedException(); }
+        public ISymbolNode ReadyToRunHelperWithToken(ReadyToRunHelperId id, Object target, mdToken token) { throw new NotImplementedException(); }
+        public IMethodNode HelperMethodEntrypoint(ReadyToRunHelper helper, MethodDesc methodDesc)
+        {
+            return MethodEntrypoint(methodDesc);
+        }
+
+        public IMethodNode MethodEntrypoint(MethodDesc method, mdToken token, bool unboxingStub = false)
+        {
+            return MethodEntrypoint(method, unboxingStub);
+        }
+        
         public IMethodNode MethodEntrypoint(MethodDesc method, bool unboxingStub = false)
         {
             if (unboxingStub != false)
@@ -106,18 +118,28 @@ namespace ILCompiler.DependencyAnalysis
 
         public IMethodNode RuntimeDeterminedMethod(MethodDesc method) { throw new NotImplementedException(); }
         public JitFrozenStringNode SerializedStringObject(string data) { return _frozenStrings.GetOrAdd(data); }
+        public ISymbolNode SerializedStringObject(string data, mdToken token) { return SerializedStringObject(data); }
         public JitGenericMethodDictionaryNode MethodGenericDictionary(MethodDesc method) { throw new NotImplementedException(); }
         public IEETypeNode ConstructedTypeSymbol(TypeDesc type) { throw new NotImplementedException(); }
         public IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false) { throw new NotImplementedException(); }
         internal IMethodNode StringAllocator(MethodDesc stringConstructor) { throw new NotImplementedException(); }
+        internal IMethodNode StringAllocator(MethodDesc stringConstructor, mdToken token) { throw new NotImplementedException(); }
         public ISymbolNode ExternSymbol(string name) { throw new NotImplementedException(); }
+        public ISymbolNode ExternSymbol(ReadyToRunHelper helper, string name) { throw new NotImplementedException(); }
         public ISymbolNode ConstantUtf8String(string str) { throw new NotImplementedException(); }
         public IEETypeNode NecessaryTypeSymbol(TypeDesc type) { return ConstructedTypeSymbol(type); }
         internal JitInterfaceDispatchCellNode InterfaceDispatchCell(MethodDesc method) { throw new NotImplementedException(); }
+        public ISymbolNode InterfaceDispatchCell(MethodDesc method, mdToken token, string callSite = null) { throw new NotImplementedException(); }
         public ISymbolNode RuntimeMethodHandle(MethodDesc method) { throw new NotImplementedException(); }
         public ISymbolNode RuntimeFieldHandle(FieldDesc field) { throw new NotImplementedException(); }
         public IMethodNode FatFunctionPointer(MethodDesc method, bool isUnboxingStub = false) { return MethodEntrypoint(method); }
         public ISymbolNode TypeThreadStaticIndex(MetadataType type) { throw new NotImplementedException(); }
+        public bool CanInline(MethodDesc caller, MethodDesc callee) { return true; }
+
+        public ISymbolNode ComputeConstantLookup(Compilation compilation, ReadyToRunHelperId helperId, object entity, mdToken token)
+        {
+            throw new NotImplementedException();
+        }
 
         public TargetDetails Target
         {
