@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
 
 using Internal.JitInterface;
 using Internal.Text;
@@ -10,19 +9,22 @@ using Internal.TypeSystem;
 
 namespace ILCompiler.DependencyAnalysis.ReadyToRun
 {
-    public class MethodImportSignature : Signature
+    public class MethodFixupSignature : Signature
     {
-        private readonly MethodDesc _methodDesc;
-        private readonly mdToken _token;
+        private readonly ReadyToRunFixupKind _fixupKind;
 
-        public MethodImportSignature(MethodDesc methodDesc, mdToken token)
+        private readonly MethodDesc _methodDesc;
+        
+        private readonly mdToken _methodRefToken;
+
+        public MethodFixupSignature(ReadyToRunFixupKind fixupKind, MethodDesc methodDesc, mdToken methodRefToken)
         {
-            Debug.Assert((uint)token != 0);
+            _fixupKind = fixupKind;
             _methodDesc = methodDesc;
-            _token = token;
+            _methodRefToken = methodRefToken;
         }
 
-        protected override int ClassCode => 322554200;
+        protected override int ClassCode => 150063499;
 
         public override ObjectData GetData(NodeFactory factory, bool relocsOnly = false)
         {
@@ -30,21 +32,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             ObjectDataBuilder dataBuilder = new ObjectDataBuilder();
             dataBuilder.AddSymbol(this);
 
-            if (!relocsOnly)
-            {
-                ReadyToRunFixupKind fixupKind;
-                if (_methodDesc.IsVirtual)
-                {
-                    fixupKind = ReadyToRunFixupKind.READYTORUN_FIXUP_VirtualEntry_RefToken;
-                }
-                else
-                {
-                    fixupKind = ReadyToRunFixupKind.READYTORUN_FIXUP_MethodEntry_RefToken;
-
-                }
-                dataBuilder.EmitByte((byte)fixupKind);
-                SignatureBuilder.EmitTokenRid(ref dataBuilder, (int)_token);
-            }
+            dataBuilder.EmitByte((byte)_fixupKind);
+            SignatureBuilder.EmitTokenRid(ref dataBuilder, _methodRefToken);
 
             return dataBuilder.ToObjectData();
         }
@@ -52,12 +41,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append("MethodImportSignature: " + _methodDesc.ToString());
+            sb.Append($@"MethodFixupSignature({_fixupKind.ToString()}): {_methodDesc.ToString()}; token: {(uint)_methodRefToken:X8})");
         }
 
         protected override int CompareToImpl(SortableDependencyNode other, CompilerComparer comparer)
         {
-            return _methodDesc.ToString().CompareTo(((MethodImportSignature)other)._methodDesc.ToString());
+            return _methodRefToken.CompareTo(((MethodFixupSignature)other)._methodRefToken);
         }
     }
 }

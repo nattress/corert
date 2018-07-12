@@ -159,6 +159,10 @@ namespace ILCompiler.DependencyAnalysis
                     helperNode = CreateTypeHandleHelper((TypeDesc)target, token);
                     break;
 
+                case ReadyToRunHelperId.VirtualCall:
+                    helperNode = CreateVirtualCallHelper((MethodDesc)target, token);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -235,6 +239,12 @@ namespace ILCompiler.DependencyAnalysis
         {
             return new DelayLoadHelper(this, new TypeFixupSignature(
                 ReadyToRunFixupKind.READYTORUN_FIXUP_TypeHandle, type, typeRefToken));
+        }
+
+        private ISymbolNode CreateVirtualCallHelper(MethodDesc method, mdToken methodRefToken)
+        {
+            return new DelayLoadHelper(this, new MethodFixupSignature(
+                ReadyToRunFixupKind.READYTORUN_FIXUP_VirtualEntry_RefToken, method, methodRefToken));
         }
 
         Dictionary<ILCompiler.ReadyToRunHelper, ISymbolNode> _helperCache = new Dictionary<ILCompiler.ReadyToRunHelper, ISymbolNode>();

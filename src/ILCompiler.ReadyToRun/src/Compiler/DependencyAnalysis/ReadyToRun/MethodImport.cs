@@ -17,7 +17,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         private readonly mdToken _token;
 
         public MethodImport(ImportSectionNode table, MethodDesc methodDesc, mdToken token)
-            : base(table, new MethodImportSignature(methodDesc, token))
+            : base(table, new MethodFixupSignature(ReadyToRunFixupKind.READYTORUN_FIXUP_MethodEntry_RefToken, methodDesc, token))
         {
             _methodDesc = methodDesc;
             _token = token;

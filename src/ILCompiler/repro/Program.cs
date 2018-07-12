@@ -3,11 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 internal class Program
 {
+    //*
     [ThreadStatic] private static string TextFileName = @"D:\git\corert\src\ILCompiler\repro\Program.cs";
 
     [ThreadStatic] private static int LineCount = 0;
@@ -127,6 +129,12 @@ internal class Program
         }
     }
 
+    private static bool ConstructListOfInt()
+    {
+        List<int> listOfInt = new List<int>();
+        return listOfInt.Count == 0;
+    }
+
     public static int Main()
     {
         const int Success = 1;
@@ -145,6 +153,7 @@ internal class Program
         TestCounts[RuntimeTypeHandle() ? Success : Failure]++;
         TestCounts[ReadAllText() ? Success : Failure]++;
         TestCounts[StreamReaderReadLine() ? Success : Failure]++;
+        TestCounts[ConstructListOfInt() ? Success : Failure]++;
 
         if (TestCounts[Failure] == 0)
         {
@@ -157,6 +166,14 @@ internal class Program
             return 1;
         }
     }
+    //*/
+
+    /*
+    public static int Main()
+    {
+        return 100;
+    }
+    //*/
 
     /// <summary>
     /// This table demonstrates progress in implementing R2R fixups in CoreRT.

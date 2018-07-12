@@ -53,9 +53,9 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return TypeFromToken((int)token);
         }
 
-        public static void EmitTokenRid(ref ObjectDataBuilder dataBuilder, int token)
+        public static void EmitTokenRid(ref ObjectDataBuilder dataBuilder, mdToken token)
         {
-            EmitData(ref dataBuilder, (uint)RidFromToken(token));
+            EmitData(ref dataBuilder, (uint)RidFromToken((int)token));
         }
 
         // compress a token
