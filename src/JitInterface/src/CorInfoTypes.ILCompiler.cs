@@ -14,6 +14,8 @@ using System.Runtime.InteropServices;
 
 namespace Internal.JitInterface
 {
+    public enum mdToken : uint
+    { }
     public struct NativeVarInfo
     {
         public uint startOffset;
