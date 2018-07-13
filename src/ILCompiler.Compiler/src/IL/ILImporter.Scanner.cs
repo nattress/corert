@@ -550,7 +550,7 @@ namespace Internal.IL
 
                 if (targetMethod.IsConstructor && targetMethod.OwningType.IsString)
                 {
-                    _dependencies.Add(_factory.StringAllocator(targetMethod, default(Internal.JitInterface.mdToken)), reason);
+                    _dependencies.Add(_factory.StringAllocator(targetMethod), reason);
                 }
                 else if (exactContextNeedsRuntimeLookup)
                 {
