@@ -7,7 +7,7 @@ using Internal.TypeSystem;
 
 namespace ILCompiler.DependencyAnalysis
 {
-    class MethodWithGCInfo : MethodCodeNode
+    public class MethodWithGCInfo : MethodCodeNode
     {
         public readonly MethodGCInfoNode GCInfoNode;
 

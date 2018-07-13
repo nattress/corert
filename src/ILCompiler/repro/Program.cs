@@ -9,7 +9,6 @@ using System.Text;
 
 internal class Program
 {
-    //*
     [ThreadStatic] private static string TextFileName = @"D:\git\corert\src\ILCompiler\repro\Program.cs";
 
     [ThreadStatic] private static int LineCount = 0;
@@ -188,7 +187,6 @@ internal class Program
     }
     //*/
 
-    /*
     public static int Main()
     {
         const int Success = 1;
@@ -196,11 +194,11 @@ internal class Program
 
         int[] TestCounts = new int[2];
 
-        // TestCounts[NewString() ? Success : Failure]++;
+        TestCounts[NewString() ? Success : Failure]++;
         TestCounts[WriteLine() ? Success : Failure]++;
-        // TestCounts[IsInstanceOf() ? Success : Failure]++;
+        TestCounts[IsInstanceOf() ? Success : Failure]++;
         // TestCounts[IsInstanceOfValueType() ? Success : Failure]++;
-        // TestCounts[ChkCast() ? Success : Failure]++;
+        TestCounts[ChkCast() ? Success : Failure]++;
         // TestCounts[ChkCastValueType() ? Success : Failure]++;
         // TestCounts[BoxUnbox() ? Success : Failure]++;
         // TestCounts[TypeHandle() ? Success : Failure]++;
@@ -214,7 +212,6 @@ internal class Program
         TestCounts[ManipulateListOfString() ? Success : Failure]++;
         */
 
-    /*
         if (TestCounts[Failure] == 0)
         {
             Console.WriteLine($@"All {TestCounts[Success]} tests pass!");
@@ -228,12 +225,13 @@ internal class Program
     }
     //*/
 
+    /*
     public static int Main()
     {
         Console.WriteLine("Hello world!");
-        NewString();
-        return 100;
+        return NewString() ? 100 : 1;
     }
+    //*/
 
     /*
     public static int Main()

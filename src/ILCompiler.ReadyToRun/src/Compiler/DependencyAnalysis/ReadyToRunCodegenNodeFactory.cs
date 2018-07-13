@@ -77,11 +77,18 @@ namespace ILCompiler.DependencyAnalysis
                 int methodIndex = RuntimeFunctionsTable.Add(newMethodNode, newMethodNode.GCInfoNode);
                 MethodEntryPointTable.Add(newMethodNode, methodIndex, this);
 
-                return newMethodNode;
+                // TODO: hack - how do we distinguish emitting main entry point from calls between
+                // methods?
+                if (token == 0)
+                {
+                    return newMethodNode;
+                }
+
+                return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token, localMethod: newMethodNode);
             }
             else
             {
-                return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token);
+                return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token, localMethod: null);
             }
         }
 
@@ -199,7 +206,7 @@ namespace ILCompiler.DependencyAnalysis
 
         private ISymbolNode CreateNewArrayHelper(ArrayType type, mdToken typeRefToken)
         {
-            Debug.Assert(SignatureBuilder.TypeFromToken(typeRefToken) == 0x01000000);
+            Debug.Assert(SignatureBuilder.TypeFromToken(typeRefToken) == CorTokenType.mdtTypeRef);
             return new DelayLoadHelper(this, new NewArrayFixupSignature(type, typeRefToken));
         }
 
@@ -408,7 +415,6 @@ namespace ILCompiler.DependencyAnalysis
             return ReadyToRunHelperWithToken(helperId, entity, token);
         }
 
-
         public override void AttachToDependencyGraph(DependencyAnalyzerBase<NodeFactory> graph)
         {
             Header = new HeaderNode(Target);
@@ -476,14 +482,30 @@ namespace ILCompiler.DependencyAnalysis
             graph.AddRoot(Header, "ReadyToRunHeader is always generated");
         }
 
-        public IMethodNode GetOrAddImportedMethodNode(MethodDesc method, bool unboxingStub, mdToken token)
+        public IMethodNode GetOrAddImportedMethodNode(MethodDesc method, bool unboxingStub, mdToken token, MethodWithGCInfo localMethod)
         {
-            Debug.Assert(((uint)token & 0xFF000000) == 0x0A000000);
+            CorTokenType tokenType = SignatureBuilder.TypeFromToken(token);
+            ReadyToRunFixupKind fixupKind;
+            switch (tokenType)
+            {
+                case CorTokenType.mdtMethodDef:
+                    fixupKind = ReadyToRunFixupKind.READYTORUN_FIXUP_MethodEntry_DefToken;
+                    break;
+
+                case CorTokenType.mdtMemberRef:
+                    fixupKind = ReadyToRunFixupKind.READYTORUN_FIXUP_MethodEntry_RefToken;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            Debug.Assert(tokenType == CorTokenType.mdtMemberRef || tokenType == CorTokenType.mdtMethodDef);
             IMethodNode methodImport;
             if (!_importMethods.TryGetValue(method, out methodImport))
             {
                 // First time we see a given external method - emit indirection cell and the import entry
-                ReadyToRun.MethodImport indirectionCell = new ReadyToRun.MethodImport(MethodImports, method, token);
+                ReadyToRun.MethodImport indirectionCell = new ReadyToRun.MethodImport(MethodImports, fixupKind, method, token, localMethod);
                 MethodImports.AddImport(this, indirectionCell);
                 _importMethods.Add(method, indirectionCell);
                 methodImport = indirectionCell;

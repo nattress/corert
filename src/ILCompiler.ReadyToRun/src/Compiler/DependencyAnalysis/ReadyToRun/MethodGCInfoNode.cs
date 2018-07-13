@@ -8,7 +8,7 @@ using Internal.Text;
 
 namespace ILCompiler.DependencyAnalysis
 {
-    class MethodGCInfoNode : EmbeddedObjectNode, ISymbolDefinitionNode
+    public class MethodGCInfoNode : EmbeddedObjectNode, ISymbolDefinitionNode
     {
         private readonly MethodCodeNode _methodNode;
 
@@ -46,7 +46,10 @@ namespace ILCompiler.DependencyAnalysis
             // Temporary hotfix - this stands for the AMD64 UNWIND_INFO I don't yet know where to get from
             dataBuilder.EmitInt(0);
 
-            dataBuilder.EmitBytes(gcInfo);
+            if (gcInfo != null)
+            {
+                dataBuilder.EmitBytes(gcInfo);
+            }
 
             /* TODO: This is apparently incorrect, a different encoding is needed here
             ObjectNode.ObjectData ehInfo = _methodNode.EHInfo;

@@ -15,13 +15,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         private readonly MethodDesc _methodDesc;
         
-        private readonly mdToken _methodRefToken;
+        private readonly mdToken _methodToken;
 
-        public MethodFixupSignature(ReadyToRunFixupKind fixupKind, MethodDesc methodDesc, mdToken methodRefToken)
+        public MethodFixupSignature(ReadyToRunFixupKind fixupKind, MethodDesc methodDesc, mdToken methodToken)
         {
             _fixupKind = fixupKind;
             _methodDesc = methodDesc;
-            _methodRefToken = methodRefToken;
+            _methodToken = methodToken;
         }
 
         protected override int ClassCode => 150063499;
@@ -33,7 +33,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.AddSymbol(this);
 
             dataBuilder.EmitByte((byte)_fixupKind);
-            SignatureBuilder.EmitTokenRid(ref dataBuilder, _methodRefToken);
+            SignatureBuilder.EmitTokenRid(ref dataBuilder, _methodToken);
 
             return dataBuilder.ToObjectData();
         }
@@ -41,12 +41,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"MethodFixupSignature({_fixupKind.ToString()}): {_methodDesc.ToString()}; token: {(uint)_methodRefToken:X8})");
+            sb.Append($@"MethodFixupSignature({_fixupKind.ToString()}): {_methodDesc.ToString()}; token: {(uint)_methodToken:X8})");
         }
 
         protected override int CompareToImpl(SortableDependencyNode other, CompilerComparer comparer)
         {
-            return _methodRefToken.CompareTo(((MethodFixupSignature)other)._methodRefToken);
+            return _methodToken.CompareTo(((MethodFixupSignature)other)._methodToken);
         }
     }
 }

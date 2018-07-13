@@ -43,12 +43,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             return unchecked((uint)token) & 0x00FFFFFFu;
         }
 
-        public static uint TypeFromToken(int token)
+        public static CorTokenType TypeFromToken(int token)
         {
-            return unchecked((uint)token) & 0xFF000000u;
+            return (CorTokenType)(unchecked((uint)token) & 0xFF000000u);
         }
 
-        public static uint TypeFromToken(mdToken token)
+        public static CorTokenType TypeFromToken(mdToken token)
         {
             return TypeFromToken((int)token);
         }
