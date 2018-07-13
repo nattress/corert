@@ -66,16 +66,16 @@ namespace ILCompiler.DependencyAnalysis
                     
                     // TODO: hack - how do we distinguish emitting main entry point from calls between
                     // methods?
-                    if (token == 0)
+                    if (methodWithToken.Token == 0)
                     {
                         return newMethodNode;
                     }
 
-                    return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token, localMethod: newMethodNode);
+                    return GetOrAddImportedMethodNode(methodWithToken.Method, unboxingStub: false, token: methodWithToken.Token, localMethod: newMethodNode);
                 }
                 else
                 {
-                    return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token, localMethod: null);
+                    return GetOrAddImportedMethodNode(methodWithToken.Method, unboxingStub: false, token: methodWithToken.Token, localMethod: null);
                 }
             });
         }
