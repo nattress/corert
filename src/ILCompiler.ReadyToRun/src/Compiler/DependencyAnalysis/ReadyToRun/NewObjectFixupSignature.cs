@@ -37,7 +37,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"NewHelperSignature: {_typeDesc.ToString()}; token: {(uint)_typeToken:X8})");
+            sb.Append($@"NewObjectSignature: {_typeDesc.ToString()}; token: {(uint)_typeToken:X8})");
         }
 
         protected override int CompareToImpl(SortableDependencyNode other, CompilerComparer comparer)

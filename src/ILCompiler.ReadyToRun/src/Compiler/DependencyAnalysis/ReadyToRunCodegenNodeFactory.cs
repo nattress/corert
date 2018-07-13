@@ -131,7 +131,7 @@ namespace ILCompiler.DependencyAnalysis
                     break;
 
                 case ReadyToRunHelperId.NewArr1:
-                    helperNode = CreateNewArrayHelper((TypeDesc)target, token);
+                    helperNode = CreateNewArrayHelper((ArrayType)target, token);
                     break;
 
                 case ReadyToRunHelperId.GetGCStaticBase:
@@ -197,30 +197,73 @@ namespace ILCompiler.DependencyAnalysis
             return new DelayLoadHelper(this, new NewObjectFixupSignature(type, typeRefToken));
         }
 
-        private ISymbolNode CreateNewArrayHelper(TypeDesc type, mdToken typeRefToken)
+        private ISymbolNode CreateNewArrayHelper(ArrayType type, mdToken typeRefToken)
         {
             Debug.Assert(SignatureBuilder.TypeFromToken(typeRefToken) == 0x01000000);
             return new DelayLoadHelper(this, new NewArrayFixupSignature(type, typeRefToken));
         }
 
-        private ISymbolNode CreateGCStaticBaseHelper(TypeDesc type, mdToken typeRefToken)
+        private ISymbolNode CreateGCStaticBaseHelper(TypeDesc type, mdToken token)
         {
             return new DelayLoadHelper(this, new TypeFixupSignature(
-                ReadyToRunFixupKind.READYTORUN_FIXUP_StaticBaseGC, type, typeRefToken));
+                ReadyToRunFixupKind.READYTORUN_FIXUP_StaticBaseGC, type, GetTypeToken(token)));
         }
 
-        private ISymbolNode CreateNonGCStaticBaseHelper(TypeDesc type, mdToken typeRefToken)
+        private ISymbolNode CreateNonGCStaticBaseHelper(TypeDesc type, mdToken token)
         {
             return new DelayLoadHelper(this, new TypeFixupSignature(
-                ReadyToRunFixupKind.READYTORUN_FIXUP_StaticBaseNonGC, type, typeRefToken));
+                ReadyToRunFixupKind.READYTORUN_FIXUP_StaticBaseNonGC, type, GetTypeToken(token)));
         }
 
-        private ISymbolNode CreateThreadStaticBaseHelper(TypeDesc type, mdToken typeRefToken)
+        private ISymbolNode CreateThreadStaticBaseHelper(TypeDesc type, mdToken token)
         {
             ReadyToRunFixupKind fixupKind = (type.IsValueType
                 ? ReadyToRunFixupKind.READYTORUN_FIXUP_ThreadStaticBaseNonGC
                 : ReadyToRunFixupKind.READYTORUN_FIXUP_ThreadStaticBaseGC);
-            return new DelayLoadHelper(this, new TypeFixupSignature(fixupKind, type, typeRefToken));
+            return new DelayLoadHelper(this, new TypeFixupSignature(fixupKind, type, GetTypeToken(token)));
+        }
+
+        private mdToken GetTypeToken(mdToken token)
+        {
+            MetadataReader mdReader = PEReader.GetMetadataReader();
+            mdToken typeToken;
+            EntityHandle handle = (EntityHandle)MetadataTokens.Handle((int)token);
+            switch (handle.Kind)
+            {
+                case HandleKind.TypeReference:
+                case HandleKind.TypeDefinition:
+                    typeToken = token;
+                    break;
+
+                case HandleKind.MemberReference:
+                    {
+                        MemberReferenceHandle memberRefHandle = (MemberReferenceHandle)handle;
+                        MemberReference memberRef = mdReader.GetMemberReference(memberRefHandle);
+                        typeToken = (mdToken)MetadataTokens.GetToken(memberRef.Parent);
+                    }
+                    break;
+
+                case HandleKind.FieldDefinition:
+                    {
+                        FieldDefinitionHandle fieldDefHandle = (FieldDefinitionHandle)handle;
+                        FieldDefinition fieldDef = mdReader.GetFieldDefinition(fieldDefHandle);
+                        typeToken = (mdToken)MetadataTokens.GetToken(fieldDef.GetDeclaringType());
+                    }
+                    break;
+
+                case HandleKind.MethodDefinition:
+                    {
+                        MethodDefinitionHandle methodDefHandle = (MethodDefinitionHandle)handle;
+                        MethodDefinition methodDef = mdReader.GetMethodDefinition(methodDefHandle);
+                        typeToken = (mdToken)MetadataTokens.GetToken(methodDef.GetDeclaringType());
+                    }
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            return typeToken;
         }
 
         private ISymbolNode CreateIsInstanceOfHelper(TypeDesc type, mdToken typeRefToken)
@@ -425,6 +468,7 @@ namespace ILCompiler.DependencyAnalysis
             ImportSectionsTable.AddEmbeddedObject(StringImports);
 
             graph.AddRoot(ModuleImport, "Module import is always generated");
+            graph.AddRoot(EagerImports, "Eager imports are always generated");
             graph.AddRoot(MethodImports, "Method imports are always generated");
             graph.AddRoot(HelperImports, "Helper imports are always generated");
             graph.AddRoot(StringImports, "String imports are always generated");

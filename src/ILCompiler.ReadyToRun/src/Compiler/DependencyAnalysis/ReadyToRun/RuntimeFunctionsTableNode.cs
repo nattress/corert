@@ -55,7 +55,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                     runtimeFunctionsBuilder.EmitReloc(methodAndGCInfo.Method, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: methodLength);
                 }
                 // Emit the GC info RVA
-                runtimeFunctionsBuilder.EmitReloc(methodAndGCInfo.GCInfo, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: 0);
+                runtimeFunctionsBuilder.EmitReloc(methodAndGCInfo.GCInfo, RelocType.IMAGE_REL_BASED_ADDR32NB, delta: methodAndGCInfo.GCInfo.Offset);
             }
 
             return runtimeFunctionsBuilder.ToObjectData();

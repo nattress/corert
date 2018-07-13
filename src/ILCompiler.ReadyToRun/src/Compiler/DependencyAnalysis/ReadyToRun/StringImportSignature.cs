@@ -25,7 +25,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.AddSymbol(this);
 
             dataBuilder.EmitByte((byte)ReadyToRunFixupKind.READYTORUN_FIXUP_StringHandle);
-            SignatureBuilder.EmitData(ref dataBuilder, (uint)SignatureBuilder.RidFromToken((int)_token));
+            SignatureBuilder.EmitData(ref dataBuilder, (uint)SignatureBuilder.RidFromToken(_token));
 
             return dataBuilder.ToObjectData();
         }

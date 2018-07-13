@@ -38,7 +38,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             throw new NotImplementedException();
         }
 
-        public static uint RidFromToken(int token)
+        public static uint RidFromToken(mdToken token)
         {
             return unchecked((uint)token) & 0x00FFFFFFu;
         }
@@ -55,13 +55,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public static void EmitTokenRid(ref ObjectDataBuilder dataBuilder, mdToken token)
         {
-            EmitData(ref dataBuilder, (uint)RidFromToken((int)token));
+            EmitData(ref dataBuilder, (uint)RidFromToken(token));
         }
 
         // compress a token
         // The least significant bit of the first compress byte will indicate the token type.
         //
-        public static void EmitToken(ref ObjectDataBuilder dataBuilder, int token)
+        public static void EmitToken(ref ObjectDataBuilder dataBuilder, mdToken token)
         {
             uint rid = RidFromToken(token);
             CorTokenType type = (CorTokenType)TypeFromToken(token);
@@ -239,6 +239,21 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                 return;
             }
 
+            /*
+            if (typeDesc.IsString)
+            {
+                dataBuilder.EmitByte((byte)CorElementType.ELEMENT_TYPE_STRING);
+                return;
+            }
+            */
+
+            if (typeDesc is ArrayType arrayType)
+            {
+                dataBuilder.EmitByte((byte)CorElementType.ELEMENT_TYPE_SZARRAY);
+                EmitType(ref dataBuilder, arrayType.ElementType, typeToken);
+                return;
+            }
+
             if (typeDesc.IsValueType)
             {
                 elementType = CorElementType.ELEMENT_TYPE_VALUETYPE;
@@ -249,7 +264,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
 
             dataBuilder.EmitByte((byte)elementType);
-            SignatureBuilder.EmitData(ref dataBuilder, SignatureBuilder.RidFromToken((int)typeToken));
+            SignatureBuilder.EmitToken(ref dataBuilder, typeToken);
         }
     }
 }

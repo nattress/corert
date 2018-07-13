@@ -12,14 +12,19 @@ namespace ILCompiler.DependencyAnalysis
     {
         private readonly MethodCodeNode _methodNode;
 
+        private readonly MethodEHInfoNode _ehInfoNode;
+
         public MethodGCInfoNode(MethodCodeNode methodNode)
         {
             _methodNode = methodNode;
+            _ehInfoNode = new MethodEHInfoNode(_methodNode);
         }
 
         public override bool StaticDependenciesAreComputed => true;
 
-        public int Offset => 0;
+        int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
+
+        int ISymbolNode.Offset => 0;
 
         protected override int ClassCode => 892356612;
 
@@ -31,16 +36,60 @@ namespace ILCompiler.DependencyAnalysis
 
         public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
         {
-            byte[] gcInfo = _methodNode.GCInfo;
-            if (gcInfo != null && gcInfo.Length != 0)
+            if (relocsOnly)
             {
-                dataBuilder.EmitBytes(gcInfo);
+                return;
             }
+
+            byte[] gcInfo = _methodNode.GCInfo;
+
+            // Temporary hotfix - this stands for the AMD64 UNWIND_INFO I don't yet know where to get from
+            dataBuilder.EmitInt(0);
+
+            dataBuilder.EmitBytes(gcInfo);
+
+            /* TODO: This is apparently incorrect, a different encoding is needed here
+            ObjectNode.ObjectData ehInfo = _methodNode.EHInfo;
+            ISymbolNode associatedDataNode = _methodNode.GetAssociatedDataNode(factory);
+
+            foreach (FrameInfo frameInfo in _methodNode.FrameInfos)
+            {
+                FrameInfoFlags flags = frameInfo.Flags;
+                flags |= (ehInfo != null ? FrameInfoFlags.HasEHInfo : 0);
+                flags |= (associatedDataNode != null ? FrameInfoFlags.HasAssociatedData : 0);
+
+                dataBuilder.EmitBytes(frameInfo.BlobData);
+                dataBuilder.EmitByte((byte)flags);
+
+                if (associatedDataNode != null)
+                {
+                    dataBuilder.EmitReloc(associatedDataNode, RelocType.IMAGE_REL_BASED_ADDR32NB);
+                    associatedDataNode = null;
+                }
+
+                if (ehInfo != null)
+                {
+                    dataBuilder.EmitReloc(_ehInfoNode, RelocType.IMAGE_REL_BASED_ADDR32NB);
+                    ehInfo = null;
+                }
+
+                if (gcInfo != null)
+                {
+                    dataBuilder.EmitBytes(gcInfo);
+                    gcInfo = null;
+                }
+
+                // Align the record to 4 bytes
+                int alignedOffset = (dataBuilder.CountBytes + 3) & -4;
+                int paddingCount = alignedOffset - dataBuilder.CountBytes;
+                dataBuilder.EmitZeros(paddingCount);
+            }
+            */
         }
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory context)
         {
-            return Array.Empty<DependencyListEntry>();
+            return new DependencyListEntry[] { new DependencyListEntry(_ehInfoNode, "EH info for method") };
         }
 
         protected override string GetName(NodeFactory context)

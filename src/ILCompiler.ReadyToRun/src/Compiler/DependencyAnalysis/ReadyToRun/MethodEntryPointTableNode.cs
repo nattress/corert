@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 
+using Internal.JitInterface;
 using Internal.NativeFormat;
 using Internal.Runtime;
 using Internal.Text;
@@ -86,13 +87,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             if (methodNode.Method is EcmaMethod ecmaMethod)
             {
                 // Strip away the token type bits, keep just the low 24 bits RID
-                rid = SignatureBuilder.RidFromToken(MetadataTokens.GetToken(ecmaMethod.Handle));
+                rid = SignatureBuilder.RidFromToken((mdToken)MetadataTokens.GetToken(ecmaMethod.Handle));
             }
             else if (methodNode.Method is MethodForInstantiatedType methodOnInstantiatedType)
             {
                 if (methodOnInstantiatedType.GetTypicalMethodDefinition() is EcmaMethod ecmaTypicalMethod)
                 {
-                    rid = SignatureBuilder.RidFromToken(MetadataTokens.GetToken(ecmaTypicalMethod.Handle));
+                    rid = SignatureBuilder.RidFromToken((mdToken)MetadataTokens.GetToken(ecmaTypicalMethod.Handle));
                 }
                 else
                 {

@@ -14,12 +14,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
     {
         public readonly ImportSectionNode Table;
 
-        internal readonly Signature ImportSignature;
+        internal readonly RvaEmbeddedPointerIndirectionNode<Signature> ImportSignature;
 
         public Import(ImportSectionNode tableNode, Signature importSignature)
         {
             Table = tableNode;
-            ImportSignature = importSignature;
+            ImportSignature = new RvaEmbeddedPointerIndirectionNode<Signature>(importSignature);
         }
 
         protected override string GetName(NodeFactory factory)
@@ -50,8 +50,10 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)
         {
-            yield return new DependencyListEntry(ImportSignature, "Signature for ready-to-run fixup import");
+            return new DependencyListEntry[] { new DependencyListEntry(ImportSignature, "Signature for ready-to-run fixup import") };
         }
+
+        public override bool RepresentsIndirectionCell => true;
 
         int ISymbolDefinitionNode.Offset => OffsetFromBeginningOfArray;
         int ISymbolNode.Offset => 0;

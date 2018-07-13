@@ -11,12 +11,12 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 {
     public class NewArrayFixupSignature : Signature
     {
-        private readonly TypeDesc _typeDesc;
+        private readonly ArrayType _arrayType;
         private readonly mdToken _typeToken;
 
-        public NewArrayFixupSignature(TypeDesc typeDesc, mdToken typeToken)
+        public NewArrayFixupSignature(ArrayType arrayType, mdToken typeToken)
         {
-            _typeDesc = typeDesc;
+            _arrayType = arrayType;
             _typeToken = typeToken;
         }
 
@@ -29,7 +29,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             dataBuilder.AddSymbol(this);
 
             dataBuilder.EmitByte((byte)ReadyToRunFixupKind.READYTORUN_FIXUP_NewArray);
-            SignatureBuilder.EmitType(ref dataBuilder, _typeDesc, _typeToken);
+            SignatureBuilder.EmitType(ref dataBuilder, _arrayType, _typeToken);
 
             return dataBuilder.ToObjectData();
         }
@@ -37,7 +37,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)
         {
             sb.Append(nameMangler.CompilationUnitPrefix);
-            sb.Append($@"NewHelperSignature: {_typeDesc.ToString()}; token: {(uint)_typeToken:X8})");
+            sb.Append($@"NewArraySignature: {_arrayType.ToString()}; token: {(uint)_typeToken:X8})");
         }
 
         protected override int CompareToImpl(SortableDependencyNode other, CompilerComparer comparer)

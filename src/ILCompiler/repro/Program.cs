@@ -154,6 +154,7 @@ internal class Program
                 return false;
             }
         }
+        Console.WriteLine();
         return listOfInt.Count == ItemCount;
     }
 
@@ -182,9 +183,12 @@ internal class Program
                 return false;
             }
         }
+        Console.WriteLine();
         return listOfString.Count == ItemCount;
     }
+    //*/
 
+    /*
     public static int Main()
     {
         const int Success = 1;
@@ -192,22 +196,25 @@ internal class Program
 
         int[] TestCounts = new int[2];
 
-        TestCounts[NewString() ? Success : Failure]++;
+        // TestCounts[NewString() ? Success : Failure]++;
         TestCounts[WriteLine() ? Success : Failure]++;
-        TestCounts[IsInstanceOf() ? Success : Failure]++;
-        TestCounts[IsInstanceOfValueType() ? Success : Failure]++;
-        TestCounts[ChkCast() ? Success : Failure]++;
-        TestCounts[ChkCastValueType() ? Success : Failure]++;
-        TestCounts[BoxUnbox() ? Success : Failure]++;
-        TestCounts[TypeHandle() ? Success : Failure]++;
-        TestCounts[RuntimeTypeHandle() ? Success : Failure]++;
-        TestCounts[ReadAllText() ? Success : Failure]++;
-        TestCounts[StreamReaderReadLine() ? Success : Failure]++;
+        // TestCounts[IsInstanceOf() ? Success : Failure]++;
+        // TestCounts[IsInstanceOfValueType() ? Success : Failure]++;
+        // TestCounts[ChkCast() ? Success : Failure]++;
+        // TestCounts[ChkCastValueType() ? Success : Failure]++;
+        // TestCounts[BoxUnbox() ? Success : Failure]++;
+        // TestCounts[TypeHandle() ? Success : Failure]++;
+        // TestCounts[RuntimeTypeHandle() ? Success : Failure]++;
+        // TestCounts[ReadAllText() ? Success : Failure]++;
+        // TestCounts[StreamReaderReadLine() ? Success : Failure]++;
+        /*
         TestCounts[ConstructListOfInt() ? Success : Failure]++;
         TestCounts[ManipulateListOfInt() ? Success : Failure]++;
         TestCounts[ConstructListOfString() ? Success : Failure]++;
         TestCounts[ManipulateListOfString() ? Success : Failure]++;
+        */
 
+    /*
         if (TestCounts[Failure] == 0)
         {
             Console.WriteLine($@"All {TestCounts[Success]} tests pass!");
@@ -220,6 +227,13 @@ internal class Program
         }
     }
     //*/
+
+    public static int Main()
+    {
+        Console.WriteLine("Hello world!");
+        NewString();
+        return 100;
+    }
 
     /*
     public static int Main()

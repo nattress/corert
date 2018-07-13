@@ -39,11 +39,8 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
         public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
         {
-            if (Marked)
-            {
-                dataBuilder.RequireInitialPointerAlignment();
-                dataBuilder.EmitReloc(Target, RelocType.IMAGE_REL_BASED_ADDR32NB);
-            }
+            dataBuilder.RequireInitialPointerAlignment();
+            dataBuilder.EmitReloc(Target, RelocType.IMAGE_REL_BASED_ADDR32NB);
         }
 
         protected override int ClassCode => -66002498;
@@ -73,7 +70,7 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public void AddImport(NodeFactory factory, Import import)
         {
             _imports.AddEmbeddedObject(import);
-            _signatures.AddEmbeddedObject(new RvaEmbeddedPointerIndirectionNode<Signature>(import.ImportSignature));
+            _signatures.AddEmbeddedObject(import.ImportSignature);
         }
 
         public string Name => _name;
@@ -83,6 +80,11 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
         public override bool StaticDependenciesAreComputed => true;
 
         protected override int ClassCode => -62839441;
+
+        public bool ShouldSkipEmittingTable(NodeFactory factory)
+        {
+            return _imports.ShouldSkipEmittingObjectNode(factory);
+        }
 
         public override void EncodeData(ref ObjectDataBuilder dataBuilder, NodeFactory factory, bool relocsOnly)
         {
@@ -94,11 +96,13 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
 
             dataBuilder.EmitReloc(_imports.StartSymbol, RelocType.IMAGE_REL_BASED_ADDR32NB, 0);
             if (!relocsOnly)
+            {
                 dataBuilder.EmitInt(_imports.GetData(factory, false).Data.Length);
 
-            dataBuilder.EmitShort((short)_flags);
-            dataBuilder.EmitByte((byte)_type);
-            dataBuilder.EmitByte(_entrySize);
+                dataBuilder.EmitShort((short)_flags);
+                dataBuilder.EmitByte((byte)_type);
+                dataBuilder.EmitByte(_entrySize);
+            }
             if (!_signatures.ShouldSkipEmittingObjectNode(factory))
             {
                 dataBuilder.EmitReloc(_signatures.StartSymbol, RelocType.IMAGE_REL_BASED_ADDR32NB, 0);
