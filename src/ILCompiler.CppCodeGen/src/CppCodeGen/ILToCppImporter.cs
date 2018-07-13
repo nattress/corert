@@ -1122,7 +1122,7 @@ namespace Internal.IL
                     if (owningType.IsString)
                     {
                         // String constructors actually look like regular method calls
-                        IMethodNode node = _compilation.NodeFactory.StringAllocator(method, default(mdToken));
+                        IMethodNode node = _compilation.NodeFactory.StringAllocator(method);
                         _dependencies.Add(node);
                         method = node.Method;
                         opcode = ILOpcode.call;

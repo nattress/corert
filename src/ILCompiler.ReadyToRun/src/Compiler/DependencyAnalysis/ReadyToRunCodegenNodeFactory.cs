@@ -92,11 +92,6 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateStringAllocatorMethodNode(MethodDesc constructor, mdToken token)
-        {
-            return CreateMethodEntrypointNode(constructor, token);
-        }
-
         public override ISymbolNode SerializedStringObject(string data, mdToken token)
         {
             ISymbolNode stringNode;

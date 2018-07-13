@@ -491,9 +491,9 @@ namespace ILCompiler.DependencyAnalysis
 
             _genericDictionaryLayouts = new NodeCache<TypeSystemEntity, DictionaryLayoutNode>(_dictionaryLayoutProvider.GetLayout);
 
-            _stringAllocators = new NodeCache<MethodWithToken, IMethodNode>(constructor =>
+            _stringAllocators = new NodeCache<MethodDesc, IMethodNode>(constructor =>
             {
-                return CreateStringAllocatorMethodNode(constructor.Method, constructor.Token);
+                return new StringAllocatorMethodNode(constructor);
             });
 
             NativeLayout = new NativeLayoutHelper(this);
@@ -505,11 +505,6 @@ namespace ILCompiler.DependencyAnalysis
         protected abstract IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token);
 
         protected abstract ISymbolNode CreateReadyToRunHelperNode(ReadyToRunHelperKey helperCall);
-
-        protected virtual IMethodNode CreateStringAllocatorMethodNode(MethodDesc constructor, mdToken token)
-        {
-            return new StringAllocatorMethodNode(constructor);
-        }
 
         public virtual ISymbolNode ComputeConstantLookup(Compilation compilation, ReadyToRunHelperId helperId, object entity, mdToken token)
         {
@@ -758,10 +753,10 @@ namespace ILCompiler.DependencyAnalysis
             return _genericDictionaryLayouts.GetOrAdd(methodOrType);
         }
 
-        private NodeCache<MethodWithToken, IMethodNode> _stringAllocators;
-        public IMethodNode StringAllocator(MethodDesc stringConstructor, mdToken token)
+        private NodeCache<MethodDesc, IMethodNode> _stringAllocators;
+        public IMethodNode StringAllocator(MethodDesc stringConstructor)
         {
-            return _stringAllocators.GetOrAdd(new MethodWithToken(stringConstructor, token));
+            return _stringAllocators.GetOrAdd(stringConstructor);
         }
 
         private NodeCache<MethodWithToken, IMethodNode> _methodEntrypoints;

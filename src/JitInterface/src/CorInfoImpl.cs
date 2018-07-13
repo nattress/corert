@@ -3241,13 +3241,16 @@ namespace Internal.JitInterface
 
                 pResult.kind = CORINFO_CALL_KIND.CORINFO_CALL;
 
+#if !READY_TO_RUN
                 if (targetMethod.IsConstructor && targetMethod.OwningType.IsString)
                 {
                     // Calling a string constructor doesn't call the actual constructor.
                     pResult.codePointerOrStubLookup.constLookup = 
-                        CreateConstLookupToSymbol(_compilation.NodeFactory.StringAllocator(targetMethod, pResolvedToken.token));
+                        CreateConstLookupToSymbol(_compilation.NodeFactory.StringAllocator(targetMethod));
                 }
-                else if (pResult.exactContextNeedsRuntimeLookup)
+                else
+#endif
+                if (pResult.exactContextNeedsRuntimeLookup)
                 {
                     // Nothing to do... The generic handle lookup gets embedded in to the codegen
                     // during the jitting of the call.
