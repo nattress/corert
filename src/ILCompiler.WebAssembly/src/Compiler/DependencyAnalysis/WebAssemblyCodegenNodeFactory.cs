@@ -34,7 +34,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool IsCppCodegenTemporaryWorkaround => true;
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
         {
             if (CompilationModuleGroup.ContainsMethodBody(method, false))
             {
@@ -51,7 +51,7 @@ namespace ILCompiler.DependencyAnalysis
             return _vTableSlotNodes.GetOrAdd(method);
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
         {
             return new WebAssemblyMethodCodeNode(TypeSystemContext.GetUnboxingThunk(method, TypeSystemContext.GeneratedAssembly));
         }

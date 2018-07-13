@@ -67,7 +67,7 @@ namespace ILCompiler.DependencyAnalysis
             if (defaultCtor != null)
             {
                 dependencyList.Add(new DependencyListEntry(
-                    factory.MethodEntrypoint(defaultCtor, default(mdToken), closestDefType.IsValueType),
+                    factory.MethodEntrypoint(defaultCtor, closestDefType.IsValueType),
                     "DefaultConstructorNode"));
             }
 

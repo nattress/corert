@@ -61,7 +61,7 @@ namespace ILCompiler.DependencyAnalysis
                 // Get the method pointer vertex
 
                 bool getUnboxingStub = method.OwningType.IsValueType && !method.Signature.IsStatic;
-                IMethodNode methodEntryPointNode = factory.MethodEntrypoint(method, default(mdToken), getUnboxingStub);
+                IMethodNode methodEntryPointNode = factory.MethodEntrypoint(method, getUnboxingStub);
                 Vertex methodPointer = nativeWriter.GetUnsignedConstant(_externalReferences.GetIndex(methodEntryPointNode));
 
                 // Get native layout vertices for the declaring type
@@ -118,7 +118,7 @@ namespace ILCompiler.DependencyAnalysis
 
             // Method entry point dependency
             bool getUnboxingStub = method.OwningType.IsValueType && !method.Signature.IsStatic;
-            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(method, default(mdToken), getUnboxingStub);
+            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(method, getUnboxingStub);
             dependencies.Add(new DependencyListEntry(methodEntryPointNode, "Exact method instantiation entry"));
 
             // Get native layout dependencies for the declaring type

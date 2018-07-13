@@ -38,7 +38,7 @@ namespace ILCompiler.DependencyAnalysis
         public override IEnumerable<DependencyListEntry> GetStaticDependencies(NodeFactory factory)
         {
             return new DependencyListEntry[] {
-                new DependencyListEntry(factory.MethodEntrypoint(Method, default(mdToken)), "Target of unboxing") };
+                new DependencyListEntry(factory.MethodEntrypoint(Method), "Target of unboxing") };
         }
 
         protected override string GetName(NodeFactory factory) => this.GetMangledName(factory.NameMangler);

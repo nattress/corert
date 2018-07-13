@@ -136,7 +136,7 @@ namespace ILCompiler.DependencyAnalysis
                 {
                     vertex = writer.GetTuple(vertex,
                         writer.GetUnsignedConstant(_externalReferences.GetIndex(
-                            factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken), useUnboxingStub))));
+                            factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), useUnboxingStub))));
                 }
 
                 if ((flags & InvokeTableFlags.NeedsParameterInterpretation) == 0)
@@ -150,7 +150,7 @@ namespace ILCompiler.DependencyAnalysis
                     else
                     {
                         vertex = writer.GetTuple(vertex,
-                            writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(canonInvokeStubMethod, default(mdToken))) << 1));
+                            writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(canonInvokeStubMethod)) << 1));
                     }
                 }
 

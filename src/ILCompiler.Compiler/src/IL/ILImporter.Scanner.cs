@@ -183,7 +183,7 @@ namespace Internal.IL
             if (mangledName != null)
                 entryPoint = _compilation.NodeFactory.ExternSymbol(mangledName);
             else
-                entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc, default(mdToken));
+                entryPoint = _compilation.NodeFactory.MethodEntrypoint(methodDesc);
 
             return entryPoint;
         }
@@ -586,7 +586,7 @@ namespace Internal.IL
                     else
                     {
                         Debug.Assert(!forceUseRuntimeLookup);
-                        _dependencies.Add(_factory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
+                        _dependencies.Add(_factory.MethodEntrypoint(targetMethod), reason);
 
                         if (targetMethod.RequiresInstMethodTableArg() && resolvedConstraint)
                         {
@@ -630,7 +630,7 @@ namespace Internal.IL
                             // We don't want array Address method to be modeled in the generic dependency analysis.
                             // The method doesn't actually have runtime determined dependencies (won't do
                             // any generic lookups).
-                            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
+                            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod), reason);
                         }
                     }
                     else if (targetMethod.AcquiresInstMethodTableFromThis())
@@ -639,7 +639,7 @@ namespace Internal.IL
                     }
                     else
                     {
-                        _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod, default(mdToken)), reason);
+                        _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(targetMethod), reason);
                     }
                 }
             }

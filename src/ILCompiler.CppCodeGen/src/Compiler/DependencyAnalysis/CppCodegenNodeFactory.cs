@@ -28,7 +28,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public override bool IsCppCodegenTemporaryWorkaround => true;
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
         {
             if (CompilationModuleGroup.ContainsMethodBody(method, false))
             {
@@ -40,7 +40,7 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
         {
             return new CppUnboxingStubNode(method);
         }

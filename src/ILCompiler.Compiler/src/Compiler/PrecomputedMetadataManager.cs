@@ -830,7 +830,7 @@ namespace ILCompiler
 
                 if (canonicalMethod.OwningType.IsCanonicalSubtype(CanonicalFormKind.Any))
                 {
-                    if (!factory.MethodEntrypoint(canonicalMethod, default(mdToken), true).Marked)
+                    if (!factory.MethodEntrypoint(canonicalMethod, true).Marked)
                         return false;
                 }
             }

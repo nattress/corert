@@ -72,7 +72,7 @@ namespace ILCompiler.DependencyAnalysis
 
                     bool getUnboxingStub = instantiatedMethod.OwningType.IsValueType;
                     dependencies = dependencies ?? new DependencyList();
-                    dependencies.Add(context.MethodEntrypoint(canonMethodTarget, default(mdToken), getUnboxingStub), "GVM Dependency - Canon method");
+                    dependencies.Add(context.MethodEntrypoint(canonMethodTarget, getUnboxingStub), "GVM Dependency - Canon method");
 
                     if (canonMethodTarget != instantiatedMethod)
                     {

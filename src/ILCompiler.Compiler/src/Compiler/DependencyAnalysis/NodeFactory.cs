@@ -21,18 +21,6 @@ using Internal.NativeFormat;
 
 namespace ILCompiler.DependencyAnalysis
 {
-    public struct MethodWithToken
-    {
-        public readonly MethodDesc Method;
-        public readonly mdToken Token;
-        
-        public MethodWithToken(MethodDesc method, mdToken token)
-        {
-            Method = method;
-            Token = token;
-        }
-    }
-    
     public abstract partial class NodeFactory
     {
         private TargetDetails _target;
@@ -302,11 +290,9 @@ namespace ILCompiler.DependencyAnalysis
                 return new PInvokeMethodFixupNode(key.Item1, key.Item2, key.Item3);
             });
 
-            _methodEntrypoints = new NodeCache<MethodWithToken, IMethodNode>(methodWithToken =>
-                CreateMethodEntrypointNode(methodWithToken.Method, methodWithToken.Token));
+            _methodEntrypoints = new NodeCache<MethodDesc, IMethodNode>(CreateMethodEntrypointNode);
 
-            _unboxingStubs = new NodeCache<MethodWithToken, IMethodNode>(methodWithToken =>
-                CreateUnboxingStubNode(methodWithToken.Method, methodWithToken.Token));
+            _unboxingStubs = new NodeCache<MethodDesc, IMethodNode>(CreateUnboxingStubNode);
 
             _methodAssociatedData = new NodeCache<IMethodNode, MethodAssociatedDataNode>(methodNode =>
             {
@@ -339,18 +325,18 @@ namespace ILCompiler.DependencyAnalysis
 
                 if (methodKey.IsUnboxingStub)
                 {
-                    return new ShadowConcreteUnboxingThunkNode(methodKey.Method, MethodEntrypoint(canonMethod, default(mdToken), true));
+                    return new ShadowConcreteUnboxingThunkNode(methodKey.Method, MethodEntrypoint(canonMethod, true));
                 }
                 else
                 {
-                    return new ShadowConcreteMethodNode(methodKey.Method, MethodEntrypoint(canonMethod, default(mdToken)));
+                    return new ShadowConcreteMethodNode(methodKey.Method, MethodEntrypoint(canonMethod));
                 }
             });
 
             _runtimeDeterminedMethods = new NodeCache<MethodDesc, IMethodNode>(method =>
             {
                 return new RuntimeDeterminedMethodNode(method,
-                    MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)));
+                    MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific)));
             });
 
             _virtMethods = new NodeCache<MethodDesc, VirtualMethodUseNode>((MethodDesc method) =>
@@ -428,7 +414,7 @@ namespace ILCompiler.DependencyAnalysis
             {
                 Debug.Assert(method.IsStaticConstructor);
                 Debug.Assert(TypeSystemContext.HasEagerStaticConstructor((MetadataType)method.OwningType));
-                return EagerCctorTable.NewNode(MethodEntrypoint(method, default(mdToken)));
+                return EagerCctorTable.NewNode(MethodEntrypoint(method));
             });
 
             _namedJumpStubNodes = new NodeCache<Tuple<string, ISymbolNode>, NamedJumpStubNode>((Tuple<string, ISymbolNode> id) =>
@@ -500,9 +486,9 @@ namespace ILCompiler.DependencyAnalysis
             WindowsDebugData = new WindowsDebugDataHelper(this);
         }
 
-        protected abstract IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token);
+        protected abstract IMethodNode CreateMethodEntrypointNode(MethodDesc method);
 
-        protected abstract IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token);
+        protected abstract IMethodNode CreateUnboxingStubNode(MethodDesc method);
 
         protected abstract ISymbolNode CreateReadyToRunHelperNode(ReadyToRunHelperKey helperCall);
 
@@ -636,14 +622,9 @@ namespace ILCompiler.DependencyAnalysis
 
         private NodeCache<DispatchCellKey, InterfaceDispatchCellNode> _interfaceDispatchCells;
 
-        public virtual InterfaceDispatchCellNode InterfaceDispatchCell(MethodDesc method, string callSite = null)
+        public InterfaceDispatchCellNode InterfaceDispatchCell(MethodDesc method, string callSite = null)
         {
             return _interfaceDispatchCells.GetOrAdd(new DispatchCellKey(method, callSite));
-        }
-
-        public virtual ISymbolNode InterfaceDispatchCell(MethodDesc method, mdToken token, string callSite = null)
-        {
-            return InterfaceDispatchCell(method, callSite);
         }
 
         private NodeCache<MethodDesc, RuntimeMethodHandleNode> _runtimeMethodHandles;
@@ -759,24 +740,23 @@ namespace ILCompiler.DependencyAnalysis
             return _stringAllocators.GetOrAdd(stringConstructor);
         }
 
-        private NodeCache<MethodWithToken, IMethodNode> _methodEntrypoints;
-        private NodeCache<MethodWithToken, IMethodNode> _unboxingStubs;
+        private NodeCache<MethodDesc, IMethodNode> _methodEntrypoints;
+        private NodeCache<MethodDesc, IMethodNode> _unboxingStubs;
         private NodeCache<IMethodNode, MethodAssociatedDataNode> _methodAssociatedData;
 
-        public IMethodNode MethodEntrypoint(MethodDesc method, mdToken token, bool unboxingStub = false)
+        public IMethodNode MethodEntrypoint(MethodDesc method, bool unboxingStub = false)
         {
-            MethodWithToken methodWithToken = new MethodWithToken(method, token);
             if (unboxingStub)
             {
-                return _unboxingStubs.GetOrAdd(methodWithToken);
+                return _unboxingStubs.GetOrAdd(method);
             }
 
-            return _methodEntrypoints.GetOrAdd(methodWithToken);
+            return _methodEntrypoints.GetOrAdd(method);
         }
 
         public virtual ISymbolNode HelperMethodEntrypoint(ReadyToRunHelper helperId, MethodDesc method)
         {
-            return MethodEntrypoint(method, default(mdToken));
+            return MethodEntrypoint(method);
         }
 
         public MethodAssociatedDataNode MethodAssociatedData(IMethodNode methodNode)
@@ -797,7 +777,7 @@ namespace ILCompiler.DependencyAnalysis
             if (method != canonMethod)
                 return FatFunctionPointer(method, isUnboxingStub);
             else
-                return MethodEntrypoint(method, default(mdToken), isUnboxingStub);
+                return MethodEntrypoint(method, isUnboxingStub);
         }
 
         public IMethodNode CanonicalEntrypoint(MethodDesc method, bool isUnboxingStub = false)
@@ -806,7 +786,7 @@ namespace ILCompiler.DependencyAnalysis
             if (method != canonMethod)
                 return ShadowConcreteMethod(method, isUnboxingStub);
             else
-                return MethodEntrypoint(method, default(mdToken), isUnboxingStub);
+                return MethodEntrypoint(method, isUnboxingStub);
         }
 
         private NodeCache<MethodDesc, GVMDependenciesNode> _gvmDependenciesNode;
@@ -828,14 +808,9 @@ namespace ILCompiler.DependencyAnalysis
         }
 
         private NodeCache<MethodKey, IMethodNode> _shadowConcreteMethods;
-        public virtual IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
+        public IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
         {
             return _shadowConcreteMethods.GetOrAdd(new MethodKey(method, isUnboxingStub));
-        }
-
-        public virtual IMethodNode ShadowConcreteMethod(MethodDesc method, mdToken token, bool isUnboxingStub = false)
-        {
-            return ShadowConcreteMethod(method, token, isUnboxingStub);
         }
 
         private NodeCache<MethodDesc, IMethodNode> _runtimeDeterminedMethods;
@@ -868,7 +843,7 @@ namespace ILCompiler.DependencyAnalysis
                 var type = _context.SystemModule.GetKnownType(entry[0], entry[1]);
                 var method = type.GetKnownMethod(entry[2], null);
 
-                symbol = MethodEntrypoint(method, default(mdToken));
+                symbol = MethodEntrypoint(method);
 
                 _helperEntrypointSymbols[index] = symbol;
             }
