@@ -122,6 +122,7 @@ namespace ILCompiler.DependencyAnalysis
         public JitGenericMethodDictionaryNode MethodGenericDictionary(MethodDesc method) { throw new NotImplementedException(); }
         public IEETypeNode ConstructedTypeSymbol(TypeDesc type) { throw new NotImplementedException(); }
         public IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false) { throw new NotImplementedException(); }
+        public IMethodNode ShadowConcreteMethod(MethodDesc method, mdToken token, bool isUnboxingStub = false) { throw new NotImplementedException(); }
         internal IMethodNode StringAllocator(MethodDesc stringConstructor) { throw new NotImplementedException(); }
         internal IMethodNode StringAllocator(MethodDesc stringConstructor, mdToken token) { throw new NotImplementedException(); }
         public ISymbolNode ExternSymbol(string name) { throw new NotImplementedException(); }
