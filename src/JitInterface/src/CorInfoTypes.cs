@@ -429,7 +429,7 @@ namespace Internal.JitInterface
         CORINFO_GENERICS_CTXT_KEEP_ALIVE = 0x00000100, // Keep the generics context alive throughout the method even if there is no explicit use, and report its location to the CLR
     }
 
-    internal enum CorInfoIntrinsics
+    public enum CorInfoIntrinsics
     {
         CORINFO_INTRINSIC_Sin,
         CORINFO_INTRINSIC_Cos,
@@ -595,7 +595,7 @@ namespace Internal.JitInterface
 
     // these are the attribute flags for fields and methods (getMethodAttribs)
     [Flags]
-    internal enum CorInfoFlag : uint
+    public enum CorInfoFlag : uint
     {
         //  CORINFO_FLG_UNUSED                = 0x00000001,
         //  CORINFO_FLG_UNUSED                = 0x00000002,

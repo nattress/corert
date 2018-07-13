@@ -29,7 +29,7 @@ using ILCompiler.DependencyAnalysis;
 
 namespace Internal.JitInterface
 {
-    public unsafe sealed partial class CorInfoImpl
+    internal unsafe sealed partial class CorInfoImpl
     {
         //
         // Global initialization and state
@@ -101,7 +101,11 @@ namespace Internal.JitInterface
         [DllImport("jitinterface")]
         private extern static char* GetExceptionMessage(IntPtr obj);
 
+#if READY_TO_RUN
+        private ReadyToRunCodegenCompilation _compilation;
+#else
         private Compilation _compilation;
+#endif
         private JitConfigProvider _jitConfig;
 
         public CorInfoImpl(Compilation compilation, JitConfigProvider jitConfig, CORINFO_RUNTIME_ABI targetAbi = CORINFO_RUNTIME_ABI.CORINFO_CORERT_ABI)
@@ -109,7 +113,11 @@ namespace Internal.JitInterface
             //
             // Global initialization
             //
+#if READY_TO_RUN
+            _compilation = (ReadyToRunCodegenCompilation)compilation;
+#else
             _compilation = compilation;
+#endif
             _jitConfig = jitConfig;
             _targetAbi = targetAbi;
 
@@ -120,7 +128,7 @@ namespace Internal.JitInterface
             {
                 throw new IOException("Failed to initialize JIT");
             }
-
+            
             _unmanagedCallbacks = GetUnmanagedCallbacks(out _keepAlive);
         }
 
