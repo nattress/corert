@@ -1425,7 +1425,7 @@ namespace Internal.IL
 
         private void AddMethodReference(MethodDesc method)
         {
-            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(method, default(mdToken)));
+            _dependencies.Add(_compilation.NodeFactory.MethodEntrypoint(method));
         }
 
         private void AddVirtualMethodReference(MethodDesc method)

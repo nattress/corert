@@ -223,7 +223,7 @@ namespace ILCompiler.DependencyAnalysis
         protected virtual IMethodNode GetMethodEntrypointNode(NodeFactory factory, out bool unboxingStub)
         {
             unboxingStub = _method.OwningType.IsValueType && !_method.Signature.IsStatic;
-            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(_method, default(mdToken), unboxingStub);
+            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(_method, unboxingStub);
             return methodEntryPointNode;
         }
     }
@@ -684,7 +684,7 @@ namespace ILCompiler.DependencyAnalysis
             // Only GVM templates need entry points.
             Debug.Assert(_method.IsVirtual);
             unboxingStub = _method.OwningType.IsValueType;
-            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(_method, default(mdToken), unboxingStub);
+            IMethodNode methodEntryPointNode = factory.MethodEntrypoint(_method, unboxingStub);
             // Note: We don't set the IsUnboxingStub flag on template methods (all template lookups performed at runtime are performed with this flag not set,
             // since it can't always be conveniently computed for a concrete method before looking up its template)
             unboxingStub = false;
@@ -972,7 +972,7 @@ namespace ILCompiler.DependencyAnalysis
 
             if (context.TypeSystemContext.HasLazyStaticConstructor(_type))
             {
-                yield return new DependencyListEntry(context.MethodEntrypoint(_type.GetStaticConstructor().GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)), "cctor for template");
+                yield return new DependencyListEntry(context.MethodEntrypoint(_type.GetStaticConstructor().GetCanonMethodTarget(CanonicalFormKind.Specific)), "cctor for template");
             }
 
             if (!_isUniversalCanon)
@@ -1178,7 +1178,7 @@ namespace ILCompiler.DependencyAnalysis
             {
                 MethodDesc cctorMethod = _type.GetStaticConstructor();
                 MethodDesc canonCctorMethod = cctorMethod.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                ISymbolNode cctorSymbol = factory.MethodEntrypoint(canonCctorMethod, default(mdToken));
+                ISymbolNode cctorSymbol = factory.MethodEntrypoint(canonCctorMethod);
                 uint cctorStaticsIndex = factory.MetadataManager.NativeLayoutInfo.StaticsReferences.GetIndex(cctorSymbol);
                 layoutInfo.AppendUnsigned(BagElementKind.ClassConstructorPointer, cctorStaticsIndex);
 

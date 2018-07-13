@@ -102,7 +102,7 @@ namespace ILCompiler.DependencyAnalysis
             Debug.Assert(IsSpecialUnboxingThunk);
 
             MethodDesc nonUnboxingMethod = ((CompilerTypeSystemContext)Method.Context).GetTargetOfSpecialUnboxingThunk(_method);
-            return factory.MethodEntrypoint(nonUnboxingMethod, default(mdToken), false);
+            return factory.MethodEntrypoint(nonUnboxingMethod, false);
         }
 
         public FrameInfo[] FrameInfos => _frameInfos;

@@ -2822,7 +2822,7 @@ namespace Internal.JitInterface
             if (method.IsVirtual)
                 throw new NotImplementedException("getFunctionEntryPoint");
 
-            pResult = CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(method, default(mdToken)));
+            pResult = CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(method));
         }
 
         private void getFunctionFixedEntryPoint(CORINFO_METHOD_STRUCT_* ftn, ref CORINFO_CONST_LOOKUP pResult)
@@ -3258,8 +3258,13 @@ namespace Internal.JitInterface
                     // codegen emitted at crossgen time)
 
                     Debug.Assert(!forceUseRuntimeLookup);
+#if READY_TO_RUN
                     pResult.codePointerOrStubLookup.constLookup = 
-                        CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod, pResolvedToken.token, false));
+                        CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypointWithToken(targetMethod, pResolvedToken.token));
+#else
+                    pResult.codePointerOrStubLookup.constLookup =
+                        CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod, false));
+#endif
                 }
                 else
                 {
@@ -3281,27 +3286,47 @@ namespace Internal.JitInterface
 
                         if (!referencingArrayAddressMethod)
                         {
+#if READY_TO_RUN
+                            pResult.codePointerOrStubLookup.constLookup =
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypointWithToken(concreteMethod, pResolvedToken.token));
+#else
                             pResult.codePointerOrStubLookup.constLookup = 
-                                CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod, pResolvedToken.token));
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod));
+#endif
                         }
                         else
                         {
                             // We don't want array Address method to be modeled in the generic dependency analysis.
                             // The method doesn't actually have runtime determined dependencies (won't do
                             // any generic lookups).
+#if READY_TO_RUN
+                            pResult.codePointerOrStubLookup.constLookup =
+                                    CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypointWithToken(targetMethod, pResolvedToken.token));
+#else
                             pResult.codePointerOrStubLookup.constLookup = 
-                                CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod, pResolvedToken.token));
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod));
+#endif
                         }
                     }
                     else if (targetMethod.AcquiresInstMethodTableFromThis())
                     {
-                        pResult.codePointerOrStubLookup.constLookup = 
-                            CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod, pResolvedToken.token));
+#if READY_TO_RUN
+                        pResult.codePointerOrStubLookup.constLookup =
+                            CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypointWithToken(concreteMethod, pResolvedToken.token));
+#else
+                            pResult.codePointerOrStubLookup.constLookup = 
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.ShadowConcreteMethod(concreteMethod));
+#endif
                     }
                     else
                     {
-                        pResult.codePointerOrStubLookup.constLookup = 
-                            CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod, pResolvedToken.token));
+#if READY_TO_RUN
+                        pResult.codePointerOrStubLookup.constLookup =
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypointWithToken(targetMethod, pResolvedToken.token));
+#else
+                            pResult.codePointerOrStubLookup.constLookup = 
+                                CreateConstLookupToSymbol(_compilation.NodeFactory.MethodEntrypoint(targetMethod));
+#endif
                     }
                 }
 
@@ -3345,12 +3370,17 @@ namespace Internal.JitInterface
                 {
                     pResult.codePointerOrStubLookup.lookupKind.needsRuntimeLookup = false;
                     pResult.codePointerOrStubLookup.constLookup.accessType = InfoAccessType.IAT_PVALUE;
+#if READY_TO_RUN
                     pResult.codePointerOrStubLookup.constLookup.addr = (void*)ObjectToHandle(
-                        _compilation.NodeFactory.InterfaceDispatchCell(targetMethod, pResolvedToken.token
+                        _compilation.NodeFactory.MethodEntrypointWithToken(targetMethod, pResolvedToken.token));
+#else
+                    pResult.codePointerOrStubLookup.constLookup.addr = (void*)ObjectToHandle(
+                        _compilation.NodeFactory.InterfaceDispatchCell(targetMethod
 #if !SUPPORT_JIT
                         , _compilation.NameMangler.GetMangledMethodName(MethodBeingCompiled).ToString()
 #endif
                         ));
+#endif
                 }
             }
             else if ((flags & CORINFO_CALLINFO_FLAGS.CORINFO_CALLINFO_LDFTN) == 0

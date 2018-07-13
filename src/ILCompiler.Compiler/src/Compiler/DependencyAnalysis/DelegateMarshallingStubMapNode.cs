@@ -56,9 +56,9 @@ namespace ILCompiler.DependencyAnalysis
             {
                 var delegateType = delegateEntry.DelegateType;
                 Vertex thunks= writer.GetTuple(
-                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.OpenStaticDelegateMarshallingThunk, default(mdToken)))),
-                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.ClosedDelegateMarshallingThunk, default(mdToken)))),
-                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.DelegateCreationThunk, default(mdToken))))
+                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.OpenStaticDelegateMarshallingThunk))),
+                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.ClosedDelegateMarshallingThunk))),
+                    writer.GetUnsignedConstant(_externalReferences.GetIndex(factory.MethodEntrypoint(delegateEntry.DelegateCreationThunk)))
                     );
 
                 Vertex vertex = writer.GetTuple(

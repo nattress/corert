@@ -19,17 +19,17 @@ namespace ILCompiler.DependencyAnalysis
         {
         }
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
         {
             if (method.IsInternalCall)
             {
                 if (TypeSystemContext.IsSpecialUnboxingThunkTargetMethod(method))
                 {
-                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method), default(mdToken));
+                    return MethodEntrypoint(TypeSystemContext.GetRealSpecialUnboxingThunkTargetMethod(method));
                 }
                 else if (method.IsArrayAddressMethod())
                 {
-                    return MethodEntrypoint(((ArrayType)method.OwningType).GetArrayMethod(ArrayMethodKind.AddressWithHiddenArg), default(mdToken));
+                    return MethodEntrypoint(((ArrayType)method.OwningType).GetArrayMethod(ArrayMethodKind.AddressWithHiddenArg));
                 }
                 else if (method.HasCustomAttribute("System.Runtime", "RuntimeImportAttribute"))
                 {
@@ -51,7 +51,7 @@ namespace ILCompiler.DependencyAnalysis
             }
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
         {
             Debug.Assert(!method.Signature.IsStatic);
 

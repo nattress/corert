@@ -723,7 +723,7 @@ namespace ILCompiler.DependencyAnalysis
             return factory.NativeLayout.MethodEntrypointDictionarySlot(
                 _method,
                 _isUnboxingThunk,
-                factory.MethodEntrypoint(canonMethod, default(mdToken), getUnboxingStubNode));
+                factory.MethodEntrypoint(canonMethod, getUnboxingStubNode));
         }
 
         public override void WriteDictionaryTocData(NodeFactory factory, IGenericLookupResultTocWriter writer)
@@ -1392,7 +1392,7 @@ namespace ILCompiler.DependencyAnalysis
                 defaultCtor = defaultCtor.GetCanonMethodTarget(CanonicalFormKind.Specific);
             }
 
-            return factory.MethodEntrypoint(defaultCtor, default(mdToken));
+            return factory.MethodEntrypoint(defaultCtor);
         }
 
         public override void AppendMangledName(NameMangler nameMangler, Utf8StringBuilder sb)

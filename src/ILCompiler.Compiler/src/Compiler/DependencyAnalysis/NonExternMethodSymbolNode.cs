@@ -82,7 +82,7 @@ namespace ILCompiler.DependencyAnalysis
         {
             Debug.Assert(IsSpecialUnboxingThunk);
 
-            return factory.MethodEntrypoint(_method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken), false);
+            return factory.MethodEntrypoint(_method.GetCanonMethodTarget(CanonicalFormKind.Specific), false);
         }
 
         public bool HasCompiledBody => _hasCompiledBody;

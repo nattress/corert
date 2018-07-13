@@ -56,7 +56,7 @@ namespace ILCompiler.DependencyAnalysis
                 factory.ConstructedTypeSymbol(factory.TypeSystemContext.GetWellKnownType(WellKnownType.String)),
                 "String constructor call");
             result.Add(
-                factory.MethodEntrypoint(_allocationMethod, default(mdToken)),
+                factory.MethodEntrypoint(_allocationMethod),
                 "String constructor call");
 
             factory.MetadataManager.GetDependenciesDueToReflectability(ref result, factory, _constructorMethod);

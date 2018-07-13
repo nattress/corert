@@ -79,7 +79,7 @@ namespace ILCompiler.DependencyAnalysis
             // the type loader dictionary information for the stub.
             GetIdForMethod(method);
 
-            dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(method, default(mdToken)), "Dynamic invoke stub"));
+            dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(method), "Dynamic invoke stub"));
             dependencies.Add(new DependencyListEntry(factory.NativeLayout.PlacedSignatureVertex(factory.NativeLayout.MethodNameAndSignatureVertex(method)), "Dynamic invoke stub"));
             dependencies.Add(new DependencyListEntry(factory.NecessaryTypeSymbol(method.OwningType), "Dynamic invoke stub containing type"));
         }
@@ -109,7 +109,7 @@ namespace ILCompiler.DependencyAnalysis
                 var nameAndSig = factory.NativeLayout.PlacedSignatureVertex(factory.NativeLayout.MethodNameAndSignatureVertex(sortedList[i].Key));
 
                 objData.EmitInt(nameAndSig.SavedVertex.VertexOffset);
-                objData.EmitReloc(factory.MethodEntrypoint(sortedList[i].Key, default(mdToken)), RelocType.IMAGE_REL_BASED_RELPTR32);
+                objData.EmitReloc(factory.MethodEntrypoint(sortedList[i].Key), RelocType.IMAGE_REL_BASED_RELPTR32);
             }
 
             _endSymbol.SetSymbolOffset(objData.CountBytes);

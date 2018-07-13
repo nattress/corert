@@ -19,6 +19,21 @@ using ILCompiler.DependencyAnalysis.ReadyToRun;
 namespace ILCompiler.DependencyAnalysis
 {
     using ReadyToRunHelper = ILCompiler.DependencyAnalysis.ReadyToRun.ReadyToRunHelper;
+    public struct MethodWithToken
+    {
+        public readonly MethodDesc Method;
+        public readonly mdToken Token;
+
+        public MethodWithToken(MethodDesc method, mdToken token)
+        {
+            Method = method;
+            Token = token;
+        }
+
+        public bool Equals(MethodWithToken other) => Method == other.Method && Token == other.Token;
+        public override bool Equals(object obj) => obj is MethodWithToken && Equals((MethodWithToken)obj);
+        public override int GetHashCode() => Method.GetHashCode();
+    }
 
     public sealed class ReadyToRunCodegenNodeFactory : NodeFactory
     {
@@ -40,6 +55,22 @@ namespace ILCompiler.DependencyAnalysis
         {
             _importMethods = new Dictionary<MethodDesc, IMethodNode>();
             _importStrings = new Dictionary<mdToken, ISymbolNode>();
+            _methodsWithTokenEntrypoints = new NodeCache<MethodWithToken, IMethodNode>(methodWithToken =>
+            {
+                if (CompilationModuleGroup.ContainsMethodBody(methodWithToken.Method, false))
+                {
+                    MethodWithGCInfo newMethodNode = new MethodWithGCInfo(methodWithToken.Method);
+                    _runtimeFunctionsGCInfo.AddEmbeddedObject(newMethodNode.GCInfoNode);
+                    int methodIndex = RuntimeFunctionsTable.Add(newMethodNode, newMethodNode.GCInfoNode);
+                    MethodEntryPointTable.Add(newMethodNode, methodIndex, this);
+
+                    return newMethodNode;
+                }
+                else
+                {
+                    return GetOrAddImportedMethodNode(methodWithToken.Method, unboxingStub: false, token: methodWithToken.Token);
+                }
+            });
         }
 
         public PEReader PEReader;
@@ -68,21 +99,16 @@ namespace ILCompiler.DependencyAnalysis
 
         public ImportSectionNode HelperImports;
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
         {
-            if (CompilationModuleGroup.ContainsMethodBody(method, false))
-            {
-                MethodWithGCInfo newMethodNode = new MethodWithGCInfo(method);
-                _runtimeFunctionsGCInfo.AddEmbeddedObject(newMethodNode.GCInfoNode);
-                int methodIndex = RuntimeFunctionsTable.Add(newMethodNode, newMethodNode.GCInfoNode);
-                MethodEntryPointTable.Add(newMethodNode, methodIndex, this);
+            return _methodsWithTokenEntrypoints.GetOrAdd(new MethodWithToken(method, default(mdToken)));
+        }
 
-                return newMethodNode;
-            }
-            else
-            {
-                return GetOrAddImportedMethodNode(method, unboxingStub: false, token: token);
-            }
+        private NodeCache<MethodWithToken, IMethodNode> _methodsWithTokenEntrypoints;
+
+        public IMethodNode MethodEntrypointWithToken(MethodDesc method, mdToken token)
+        {
+            return _methodsWithTokenEntrypoints.GetOrAdd(new MethodWithToken(method, token));
         }
 
         public override ISymbolNode SerializedStringObject(string data, mdToken token)
@@ -320,19 +346,9 @@ namespace ILCompiler.DependencyAnalysis
             return GetReadyToRunHelperCell(ILCompiler.DependencyAnalysis.ReadyToRun.ReadyToRunHelper.READYTORUN_HELPER_RngChkFail);
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
         {
             throw new NotImplementedException();
-        }
-
-        public override InterfaceDispatchCellNode InterfaceDispatchCell(MethodDesc method, string callSite = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override ISymbolNode InterfaceDispatchCell(MethodDesc method, mdToken token, string callSite = null)
-        {
-            return MethodEntrypoint(method, token, unboxingStub: false);
         }
 
         private Dictionary<ReadyToRunHelper, ISymbolNode> _constructedHelpers = new Dictionary<ReadyToRunHelper, ISymbolNode>();
@@ -441,17 +457,6 @@ namespace ILCompiler.DependencyAnalysis
             }
             return methodImport;
         }
-
-        public override IMethodNode ShadowConcreteMethod(MethodDesc method, bool isUnboxingStub = false)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override IMethodNode ShadowConcreteMethod(MethodDesc method, mdToken token, bool isUnboxingStub = false)
-        {
-            return MethodEntrypoint(method, token, isUnboxingStub);
-        }
-
 
     }
 }

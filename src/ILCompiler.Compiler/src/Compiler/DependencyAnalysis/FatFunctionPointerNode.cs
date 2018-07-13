@@ -76,7 +76,7 @@ namespace ILCompiler.DependencyAnalysis
             MethodDesc canonMethod = Method.GetCanonMethodTarget(CanonicalFormKind.Specific);
 
             // Pointer to the canonical body of the method
-            builder.EmitPointerReloc(factory.MethodEntrypoint(canonMethod, default(mdToken), _isUnboxingStub));
+            builder.EmitPointerReloc(factory.MethodEntrypoint(canonMethod, _isUnboxingStub));
 
             // Find out what's the context to use
             ISortableSymbolNode contextParameter;

@@ -250,9 +250,9 @@ namespace ILCompiler
             {
                 dependencies.Add(factory.NecessaryTypeSymbol(type), "Delegate Marshalling Stub");
 
-                dependencies.Add(factory.MethodEntrypoint(GetOpenStaticDelegateMarshallingStub(type), default(mdToken)), "Delegate Marshalling Stub");
-                dependencies.Add(factory.MethodEntrypoint(GetClosedDelegateMarshallingStub(type), default(mdToken)), "Delegate Marshalling Stub");
-                dependencies.Add(factory.MethodEntrypoint(GetForwardDelegateCreationStub(type), default(mdToken)), "Delegate Marshalling Stub");
+                dependencies.Add(factory.MethodEntrypoint(GetOpenStaticDelegateMarshallingStub(type)), "Delegate Marshalling Stub");
+                dependencies.Add(factory.MethodEntrypoint(GetClosedDelegateMarshallingStub(type)), "Delegate Marshalling Stub");
+                dependencies.Add(factory.MethodEntrypoint(GetForwardDelegateCreationStub(type)), "Delegate Marshalling Stub");
             }
         }
 
@@ -263,9 +263,9 @@ namespace ILCompiler
                 dependencies.Add(factory.NecessaryTypeSymbol(type), "Struct Marshalling Stub");
 
                 var stub = (StructMarshallingThunk)GetStructMarshallingManagedToNativeStub(type);
-                dependencies.Add(factory.MethodEntrypoint(stub, default(mdToken)), "Struct Marshalling stub");
-                dependencies.Add(factory.MethodEntrypoint(GetStructMarshallingNativeToManagedStub(type), default(mdToken)), "Struct Marshalling stub");
-                dependencies.Add(factory.MethodEntrypoint(GetStructMarshallingCleanupStub(type), default(mdToken)), "Struct Marshalling stub");
+                dependencies.Add(factory.MethodEntrypoint(stub), "Struct Marshalling stub");
+                dependencies.Add(factory.MethodEntrypoint(GetStructMarshallingNativeToManagedStub(type)), "Struct Marshalling stub");
+                dependencies.Add(factory.MethodEntrypoint(GetStructMarshallingCleanupStub(type)), "Struct Marshalling stub");
 
                 AddDependenciesDueToPInvokeStructDelegateField(ref dependencies, factory, type);
             }

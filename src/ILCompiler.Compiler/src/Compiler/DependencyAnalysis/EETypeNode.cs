@@ -232,7 +232,7 @@ namespace ILCompiler.DependencyAnalysis
                     if (impl.OwningType == defType && !impl.IsAbstract)
                     {
                         MethodDesc canonImpl = impl.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                        yield return new CombinedDependencyListEntry(factory.MethodEntrypoint(canonImpl, default(mdToken), _type.IsValueType), factory.VirtualMethodUse(decl), "Virtual method");
+                        yield return new CombinedDependencyListEntry(factory.MethodEntrypoint(canonImpl, _type.IsValueType), factory.VirtualMethodUse(decl), "Virtual method");
                     }
                 }
 
@@ -421,7 +421,7 @@ namespace ILCompiler.DependencyAnalysis
                         if (!MethodHasNonGenericILMethodBody(method))
                             continue;
 
-                        dependencies.Add(factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)),
+                        dependencies.Add(factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific)),
                             "Ensure all methods on type due to CompilationModuleGroup policy");
                     }
                 }
@@ -781,7 +781,7 @@ namespace ILCompiler.DependencyAnalysis
                 if (!implMethod.IsAbstract)
                 {
                     MethodDesc canonImplMethod = implMethod.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                    objData.EmitPointerReloc(factory.MethodEntrypoint(canonImplMethod, default(mdToken), implMethod.OwningType.IsValueType));
+                    objData.EmitPointerReloc(factory.MethodEntrypoint(canonImplMethod, implMethod.OwningType.IsValueType));
                 }
                 else
                 {
@@ -811,7 +811,7 @@ namespace ILCompiler.DependencyAnalysis
             {
                 MethodDesc finalizerMethod = _type.GetFinalizer();
                 MethodDesc canonFinalizerMethod = finalizerMethod.GetCanonMethodTarget(CanonicalFormKind.Specific);
-                objData.EmitPointerReloc(factory.MethodEntrypoint(canonFinalizerMethod, default(mdToken)));
+                objData.EmitPointerReloc(factory.MethodEntrypoint(canonFinalizerMethod));
             }
         }
 
@@ -1239,7 +1239,7 @@ namespace ILCompiler.DependencyAnalysis
                     if (dependencies == null)
                         dependencies = new DependencyList();
 
-                    dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(universalCanonGVMMethod, default(mdToken)), "USG GVM Method"));
+                    dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(universalCanonGVMMethod), "USG GVM Method"));
                 }
             }
         }

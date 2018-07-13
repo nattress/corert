@@ -161,7 +161,7 @@ namespace ILCompiler.DependencyAnalysis
                 // dependencies in the context of the concrete type that owns this dictionary.
                 yield return new CombinedDependencyListEntry(
                     factory.ShadowConcreteMethod(method),
-                    factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific), default(mdToken)),
+                    factory.MethodEntrypoint(method.GetCanonMethodTarget(CanonicalFormKind.Specific)),
                     "Generic dictionary dependency");
             }
         }

@@ -210,7 +210,7 @@ namespace ILCompiler
             ReadyToRunHeader.Add(MetadataManager.BlobIdToReadyToRunSection(ReflectionMapBlob.CommonFixupsTable), commonFixupsTableNode, commonFixupsTableNode, commonFixupsTableNode.EndSymbol);
         }
 
-        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateMethodEntrypointNode(MethodDesc method)
         {
             if (method.HasCustomAttribute("System.Runtime", "RuntimeImportAttribute"))
             {
@@ -225,7 +225,7 @@ namespace ILCompiler
             return _importedNodeProvider.ImportedMethodCodeNode(this, method, false);
         }
 
-        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method, mdToken token)
+        protected override IMethodNode CreateUnboxingStubNode(MethodDesc method)
         {
             if (method.IsCanonicalMethod(CanonicalFormKind.Any) && !method.HasInstantiation)
             {

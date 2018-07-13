@@ -38,7 +38,7 @@ namespace ILCompiler.DependencyAnalysis
                         factory.MetadataManager.DynamicInvokeTemplateData.AddDependenciesDueToInvokeTemplatePresence(ref dependencies, factory, canonInvokeStub);
                     }
                     else
-                        dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(canonInvokeStub, default(mdToken)), "Reflection invoke"));
+                        dependencies.Add(new DependencyListEntry(factory.MethodEntrypoint(canonInvokeStub), "Reflection invoke"));
                 }
 
                 bool skipUnboxingStubDependency = false;
