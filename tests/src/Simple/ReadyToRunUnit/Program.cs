@@ -717,6 +717,27 @@ internal class Program
         return match;
     }
 
+    class ClassWithVirtual
+    {
+        public bool VirtualCalledFlag = false;
+
+        public virtual void Virtual()
+        {
+            Console.WriteLine("Virtual called");
+            VirtualCalledFlag = true;
+        }
+    }
+
+    // Test that ldvirtftn can load a virtual instance delegate method
+    public static bool VirtualDelegateLoadTest()
+    {
+        var classWithVirtual = new ClassWithVirtual();
+        Action x = classWithVirtual.Virtual;
+        x();
+
+        return classWithVirtual.VirtualCalledFlag;
+    }
+
     public static int Main(string[] args)
     {
         if (args.Length > 0)
@@ -764,6 +785,7 @@ internal class Program
         RunTest("VectorTest", VectorTest());
         RunTest("EnumHashValueTest", EnumHashValueTest());
         RunTest("RVAFieldTest", RVAFieldTest());
+        RunTest("VirtualDelegateLoadTest", VirtualDelegateLoadTest());
 
         Console.WriteLine($@"{_passedTests.Count} tests pass:");
         foreach (string testName in _passedTests)
