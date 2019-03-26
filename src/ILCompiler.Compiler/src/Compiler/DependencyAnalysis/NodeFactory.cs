@@ -20,7 +20,7 @@ namespace ILCompiler.DependencyAnalysis
     public abstract partial class NodeFactory
     {
         private TargetDetails _target;
-        private CompilerTypeSystemContext _context;
+        protected readonly CompilerTypeSystemContext _context;
         private CompilationModuleGroup _compilationModuleGroup;
         private VTableSliceProvider _vtableSliceProvider;
         private DictionaryLayoutProvider _dictionaryLayoutProvider;

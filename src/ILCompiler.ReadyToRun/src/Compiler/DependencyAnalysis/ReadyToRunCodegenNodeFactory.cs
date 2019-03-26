@@ -10,6 +10,7 @@ using System.Reflection.Metadata.Ecma335;
 using ILCompiler.DependencyAnalysis.ReadyToRun;
 using ILCompiler.DependencyAnalysisFramework;
 
+using Internal.IL;
 using Internal.JitInterface;
 using Internal.TypeSystem;
 
@@ -549,6 +550,62 @@ namespace ILCompiler.DependencyAnalysis
                 _dynamicHelperCellCache.Add(methodWithToken, result);
             }
             return result;
+        }
+
+        private TypeDesc _systemRuntimeCompilerServicesJitHelpersType;
+
+        public TypeDesc JitHelpersType
+        {
+            get
+            {
+                if (_systemRuntimeCompilerServicesJitHelpersType == null)
+                {
+                    _systemRuntimeCompilerServicesJitHelpersType = _context.SystemModule.GetKnownType("System.Runtime.CompilerServices", "JitHelpers");
+                }
+                return _systemRuntimeCompilerServicesJitHelpersType;
+            }
+        }
+
+        private TypeDesc _systemRuntimeCompilerServicesRuntimeHelpersType;
+
+        public TypeDesc RuntimeHelpersType
+        {
+            get
+            {
+                if (_systemRuntimeCompilerServicesRuntimeHelpersType == null)
+                {
+                    _systemRuntimeCompilerServicesRuntimeHelpersType = _context.SystemModule.GetKnownType("System.Runtime.CompilerServices", "RuntimeHelpers");
+                }
+                return _systemRuntimeCompilerServicesRuntimeHelpersType;
+            }
+        }
+
+        private TypeDesc _internalRuntimeCompilerServicesUnsafeType;
+
+        public TypeDesc UnsafeType
+        {
+            get
+            {
+                if (_internalRuntimeCompilerServicesUnsafeType == null)
+                {
+                    _internalRuntimeCompilerServicesUnsafeType = _context.SystemModule.GetKnownType("Internal.Runtime.CompilerServices", "Unsafe");
+                }
+                return _internalRuntimeCompilerServicesUnsafeType;
+            }
+        }
+
+        private TypeDesc _systemByReferenceType;
+
+        public TypeDesc ByReferenceType
+        {
+            get
+            {
+                if (_systemByReferenceType == null)
+                {
+                    _systemByReferenceType = _context.SystemModule.GetKnownType("System", "ByReference`1");
+                }
+                return _systemByReferenceType;
+            }
         }
     }
 }

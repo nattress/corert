@@ -381,6 +381,19 @@ namespace Internal.JitInterface
 
         private MethodIL Get_CORINFO_METHOD_INFO(MethodDesc method, MethodIL methodIL, CORINFO_METHOD_INFO* methodInfo)
         {
+#if READYTORUN
+            // System.Runtime.CompilerServices.JitHelpers contains some IL intrinsic methods whose bodies are implemented
+            // by hand-crafted IL. These methods are not marked intrinsic so exclude all of them until we port the implementations
+            // to CPAOT.
+            if (method.OwningType == _compilation.NodeFactory.JitHelpersType
+                || method.OwningType == _compilation.NodeFactory.RuntimeHelpersType
+                || method.OwningType == _compilation.NodeFactory.UnsafeType
+                || (method.OwningType.HasSameTypeDefinition(_compilation.NodeFactory.ByReferenceType) && !method.IsIntrinsic))
+            {
+                throw new RequiresRuntimeJitException(_compilation.NodeFactory.JitHelpersType);
+            }
+#endif
+
             // MethodIL can be provided externally for the case of a method whose IL was replaced because we couldn't compile it.
             if (methodIL == null)
                 methodIL = _compilation.GetMethodIL(method);
