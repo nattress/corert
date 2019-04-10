@@ -130,6 +130,12 @@ namespace ILCompiler.PEWriter
         private int _metadataFileOffset;
 
         /// <summary>
+        /// Provides locations of various ready-to-run sections if the input assembly is already a
+        /// ready-to-run image so those sections can be excluded from the final image.
+        /// </summary>
+        private ReadyToRunHeaders _readyToRunHeaders;
+
+        /// <summary>
         /// COR header decoded from the input MSIL file.
         /// </summary>
         public CorHeaderBuilder CorHeader => _corHeaderBuilder;
@@ -161,6 +167,10 @@ namespace ILCompiler.PEWriter
             _customSections = new HashSet<string>(sectionNames.Select((sn) => sn.SectionName));
             
             _sectionRvaDeltas = new List<SectionRVADelta>();
+            if (ReadyToRunHeaders.IsReadyToRunImage(peReader))
+            {
+                _readyToRunHeaders = new ReadyToRunHeaders(peReader);
+            }
             
             ImmutableArray<Section>.Builder sectionListBuilder = ImmutableArray.CreateBuilder<Section>();
 
@@ -338,16 +348,18 @@ namespace ILCompiler.PEWriter
                 SectionHeader sectionHeader = _peReader.PEHeaders.SectionHeaders[sectionIndex];
                 int sectionOffset = (_peReader.IsLoadedImage ? sectionHeader.VirtualAddress : sectionHeader.PointerToRawData);
                 int rvaDelta = location.RelativeVirtualAddress - sectionHeader.VirtualAddress;
-                
+                int endRva = sectionHeader.VirtualAddress + Math.Max(sectionHeader.VirtualSize, sectionHeader.SizeOfRawData);
                 _sectionRvaDeltas.Add(new SectionRVADelta(
                     startRVA: sectionHeader.VirtualAddress,
-                    endRVA: sectionHeader.VirtualAddress + Math.Max(sectionHeader.VirtualSize, sectionHeader.SizeOfRawData),
+                    endRVA: endRva,
                     deltaRVA: rvaDelta));
                 
                 unsafe
                 {
-                    int bytesToRead = Math.Min(sectionHeader.SizeOfRawData, sectionHeader.VirtualSize);
-                    BlobReader inputSectionReader = _peReader.GetEntireImage().GetReader(sectionOffset, bytesToRead);
+                    // Optimistically we read all bytes from the input, but this will be decremented for any ranges we skip over
+                    int bytesReadFromInput = Math.Min(sectionHeader.SizeOfRawData, sectionHeader.VirtualSize);
+                    int inputSectionByteSize = Math.Min(sectionHeader.SizeOfRawData, sectionHeader.VirtualSize);
+                    BlobReader inputSectionReader = _peReader.GetEntireImage().GetReader(sectionOffset, inputSectionByteSize);
                         
                     if (name == ".rsrc")
                     {
@@ -357,18 +369,37 @@ namespace ILCompiler.PEWriter
                     }
                     else
                     {
+                        // Copy the input MSIL image section through to the output image, skipping any existing
+                        // ready-to-run sections
+
                         sectionDataBuilder = new BlobBuilder();
+                        int currentRva = sectionHeader.VirtualAddress;
+                        foreach (var readyToRunSection in _readyToRunHeaders.GetSectionsForRvaRange(sectionHeader.VirtualAddress, endRva))
+                        {
+                            int bytesToCopy = readyToRunSection.RelativeVirtualAddress - currentRva;
+                            if (bytesToCopy > 0)
+                            {
+                                sectionDataBuilder.WriteBytes(inputSectionReader.CurrentPointer, bytesToCopy);
+                                currentRva += bytesToCopy;
+                            }
+
+                            // Skip the bytes in the ready-to-run section
+                            inputSectionReader.ReadBytes(readyToRunSection.Size);
+                            bytesReadFromInput -= readyToRunSection.Size;
+                        }
+                        
+                        // Flush the remaining bytes after the final ready-to-run section
                         sectionDataBuilder.WriteBytes(inputSectionReader.CurrentPointer, inputSectionReader.RemainingBytes);
                     }
 
                     int metadataRvaDelta = _peReader.PEHeaders.CorHeader.MetadataDirectory.RelativeVirtualAddress - sectionHeader.VirtualAddress;
-                    if (metadataRvaDelta >= 0 && metadataRvaDelta < bytesToRead)
+                    if (metadataRvaDelta >= 0 && metadataRvaDelta < inputSectionByteSize)
                     {
                         _metadataFileOffset = location.PointerToRawData + metadataRvaDelta;
                     }
 
                     int corHeaderRvaDelta = _peReader.PEHeaders.PEHeader.CorHeaderTableDirectory.RelativeVirtualAddress - sectionHeader.VirtualAddress;
-                    if (corHeaderRvaDelta >= 0 && corHeaderRvaDelta < bytesToRead)
+                    if (corHeaderRvaDelta >= 0 && corHeaderRvaDelta < inputSectionByteSize)
                     {
                         // Assume COR header resides in this section, deserialize it and store its location
                         _corHeaderFileOffset = location.PointerToRawData + corHeaderRvaDelta;
@@ -385,11 +416,11 @@ namespace ILCompiler.PEWriter
                         alignedSize = (alignedSize + 0xFFF) & ~0xFFF;
                     }
 
-                    if (alignedSize > bytesToRead)
+                    if (alignedSize > bytesReadFromInput)
                     {
                         // If the number of bytes read from the source PE file is less than the virtual size,
                         // zero pad to the end of virtual size before emitting extra section data
-                        sectionDataBuilder.WriteBytes(0, alignedSize - bytesToRead);
+                        sectionDataBuilder.WriteBytes(0, alignedSize - bytesReadFromInput);
                     }
                     location = new SectionLocation(
                         location.RelativeVirtualAddress + sectionDataBuilder.Count,
