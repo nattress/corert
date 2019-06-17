@@ -128,28 +128,51 @@ namespace ReadyToRun.TestHarness
 
             if (_noEtl)
             {
-                RunTest(null, null, passThroughArguments, out exitCode);
+                RunTest(null, null, passThroughArguments, out exitCode, null);
             }
             else
             {
-                using (var session = new TraceEventSession("ReadyToRunTestSession"))
+                if (true)
                 {
-                    var r2rMethodFilter = new ReadyToRunJittedMethods(session, testModules, testFolders);
-                    session.EnableProvider(ClrTraceEventParser.ProviderGuid, TraceEventLevel.Verbose, (ulong)(ClrTraceEventParser.Keywords.Jit | ClrTraceEventParser.Keywords.Loader));
+                    var r2rMethodFilter = new ReadyToRunJittedMethodsEventPipe(testModules, testFolders);
+                    //session.EnableProvider(ClrTraceEventParser.ProviderGuid, TraceEventLevel.Verbose, (ulong)(ClrTraceEventParser.Keywords.Jit | ClrTraceEventParser.Keywords.Loader));
 
-                    Task.Run(() => RunTest(session, r2rMethodFilter, passThroughArguments, out exitCode));
+                    RunTest(null, null, passThroughArguments, out exitCode, r2rMethodFilter);
+
 
                     // Block, processing callbacks for events we subscribed to
-                    session.Source.Process();
+                    //session.Source.Process();
 
                     Console.WriteLine("Test execution " + (exitCode == StatusTestPassed ? "PASSED" : "FAILED"));
-                    int analysisResult = AnalyzeResults(r2rMethodFilter, _whitelistFilename);
+                    //int analysisResult = AnalyzeResults(r2rMethodFilter, _whitelistFilename);
 
-                    Console.WriteLine("Test jitted method analysis " + (analysisResult == StatusTestPassed ? "PASSED" : "FAILED"));
+                    //Console.WriteLine("Test jitted method analysis " + (analysisResult == StatusTestPassed ? "PASSED" : "FAILED"));
 
                     // If the test passed, return the Jitted method analysis result
                     // If the test failed, return its execution exit code
-                    exitCode = exitCode == StatusTestPassed ? analysisResult : exitCode;
+                    //exitCode = exitCode == StatusTestPassed ? analysisResult : exitCode;
+                }
+                else
+                {
+                    using (var session = new TraceEventSession("ReadyToRunTestSession"))
+                    {
+                        var r2rMethodFilter = new ReadyToRunJittedMethods(session, testModules, testFolders);
+                        session.EnableProvider(ClrTraceEventParser.ProviderGuid, TraceEventLevel.Verbose, (ulong)(ClrTraceEventParser.Keywords.Jit | ClrTraceEventParser.Keywords.Loader));
+
+                        Task.Run(() => RunTest(session, r2rMethodFilter, passThroughArguments, out exitCode, null));
+
+                        // Block, processing callbacks for events we subscribed to
+                        session.Source.Process();
+
+                        Console.WriteLine("Test execution " + (exitCode == StatusTestPassed ? "PASSED" : "FAILED"));
+                        int analysisResult = AnalyzeResults(r2rMethodFilter, _whitelistFilename);
+
+                        Console.WriteLine("Test jitted method analysis " + (analysisResult == StatusTestPassed ? "PASSED" : "FAILED"));
+
+                        // If the test passed, return the Jitted method analysis result
+                        // If the test failed, return its execution exit code
+                        exitCode = exitCode == StatusTestPassed ? analysisResult : exitCode;
+                    }
                 }
             }
 
@@ -240,7 +263,7 @@ namespace ReadyToRun.TestHarness
             return $"[{moduleName}]{methodName}";
         }
 
-        private static void RunTest(TraceEventSession session, ReadyToRunJittedMethods r2rMethodFilter, string testArguments, out int exitCode)
+        private static void RunTest(TraceEventSession session, ReadyToRunJittedMethods r2rMethodFilter, string testArguments, out int exitCode, ReadyToRunJittedMethodsEventPipe r2rEventPipeFilter)
         {
             exitCode = -100;
 
@@ -258,6 +281,12 @@ namespace ReadyToRun.TestHarness
                     {
                         r2rMethodFilter.SetProcessId(process.Id);
                     }
+
+                    if (r2rEventPipeFilter != null)
+                    {
+                        r2rEventPipeFilter.StartCollection(process.Id);
+                    }
+
 
                     process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs args)
                     {
@@ -302,6 +331,11 @@ namespace ReadyToRun.TestHarness
             }
             finally
             {
+                if (r2rEventPipeFilter != null)
+                {
+                    r2rEventPipeFilter.StopCollection();
+                }
+
                 // Stop ETL collection on the main thread
                 session?.Stop();
             }

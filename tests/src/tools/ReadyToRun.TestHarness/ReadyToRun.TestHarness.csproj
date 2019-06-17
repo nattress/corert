@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.19" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.42" />
     <PackageReference Include="System.CommandLine" Version="0.1.0-e160119-1" />
+    <Reference Include="Microsoft.Diagnostics.Tools.RuntimeClient">
+      <HintPath>C:\git\diagnostics\artifacts\bin\Microsoft.Diagnostics.Tools.RuntimeClient\Debug\netcoreapp2.1\publish\Microsoft.Diagnostics.Tools.RuntimeClient.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
