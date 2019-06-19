@@ -24,7 +24,7 @@ namespace ReadyToRun.TestHarness
     class Program
     {
         // Default timeout in milliseconds
-        private const int NormalTestTimeout = 2 * 60 * 1000;
+        private const int NormalTestTimeout = 20 * 60 * 1000;
 
         // Timeout under GC stress in milliseconds
         private const int GCStressTestTimeout = 30 * 60 * 1000;
@@ -333,6 +333,7 @@ namespace ReadyToRun.TestHarness
             {
                 if (r2rEventPipeFilter != null)
                 {
+                    Console.WriteLine("Stopping EventPipe collection.");
                     r2rEventPipeFilter.StopCollection();
                 }
 

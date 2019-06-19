@@ -39,74 +39,31 @@ namespace ReadyToRun.TestHarness
 
         public async Task StartCollection(int pid)
         {
-            string output = "d:\\repro\\r2r\\temppipefile";
+            string output = "d:\\repro\\r2r\\temp\\pipefile.txt";
             _pid = pid;
-            //_pid = 43552;
+
             try
             {
                 Debug.Assert(output != null);
-                
+
                 Provider[] providerCollection = new[] { new Provider("Microsoft-Windows-DotNETRuntime", (ulong)ClrTraceEventParser.Keywords.Default, EventLevel.Informational) };
 
-                var process = Process.GetProcessById(_pid);
                 var configuration = new SessionConfiguration(
                     circularBufferSizeMB: DefaultCircularBufferSizeInMB,
-                    outputPath: output, // Not used on the streaming scenario.
+                    outputPath: output,
                     providers: providerCollection);
 
                 ulong sessionId = 0;
                 _collectionStream = EventPipeClient.CollectTracing(_pid, configuration, out sessionId);
-                //EventPipeEventSource source = new EventPipeEventSource()
+                
                 if (sessionId == 0)
                 {
                     throw new Exception("Unable to create session.");
                 }
-                /*
-                using (Stream stream = EventPipeClient.CollectTracing(_pid, configuration, out sessionId))
+                else
                 {
-                    if (sessionId == 0)
-                    {
-                        throw new Exception("Unable to create session.");
-                    }
-                    if (File.Exists(output))
-                    {
-                        throw new Exception($"Unable to create file {output}");
-                    }
-
-                    var collectingTask = new Task(() => {
-                        try
-                        {
-                            using (var fs = new FileStream(output, FileMode.Create, FileAccess.Write))
-                            {
-                                Console.Out.WriteLine($"Process     : {process.MainModule.FileName}");
-                                Console.Out.WriteLine($"Output File : {fs.Name}");
-                                Console.Out.WriteLine($"\tSession Id: 0x{sessionId:X16}");
-                                
-                                while (true)
-                                {
-                                    var buffer = new byte[16 * 1024];
-                                    int nBytesRead = stream.Read(buffer, 0, buffer.Length);
-                                    if (nBytesRead <= 0)
-                                        break;
-                                    fs.Write(buffer, 0, nBytesRead);
-
-                                    Debug.WriteLine($"PACKET: {Convert.ToBase64String(buffer, 0, nBytesRead)} (bytes {nBytesRead})");
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.Error.WriteLine($"[ERROR] {ex.ToString()}");
-                        }
-                    });
-
-                    collectingTask.Start();
-
-                    await collectingTask;
+                    Console.WriteLine($"[dbg] EventPipe session created with id {sessionId}");
                 }
-                 */
-                Console.Out.WriteLine();
-                Console.Out.WriteLine("Trace completed.");
             }
             catch (Exception ex)
             {
