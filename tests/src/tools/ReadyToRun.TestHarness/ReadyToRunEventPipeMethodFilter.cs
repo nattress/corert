@@ -7,11 +7,12 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing;
-
-using Microsoft.Diagnostics.Tools.RuntimeClient;
+using Microsoft.Diagnostics.Tracing.EventPipe;
+using Microsoft.Diagnostics.Tracing.Etlx;
 
 namespace ReadyToRun.TestHarness
 {
@@ -24,66 +25,104 @@ namespace ReadyToRun.TestHarness
     {
         private ICollection<string> _testModuleNames;
         private ICollection<string> _testFolderNames;
-        private List<long> _testModuleIds = new List<long>();
         private Dictionary<long, string> _testModuleIdToName = new Dictionary<long, string>();
         private Dictionary<string, HashSet<string>> _methodsJitted = new Dictionary<string, HashSet<string>>();
-        private int _pid = -1;
-        private ulong _sessionId = 0;
-        private static uint DefaultCircularBufferSizeInMB => 256;
-        private Stream _collectionStream;
+        
         public ReadyToRunJittedMethodsEventPipe(ICollection<string> testModuleNames, ICollection<string> testFolderNames)
         {
             _testModuleNames = testModuleNames;
             _testFolderNames = testFolderNames;
         }
 
-        public async Task StartCollection(int pid)
+        public void ParseTraceFile(string traceFile)
         {
-            string output = "d:\\repro\\r2r\\temp\\pipefile.txt";
-            _pid = pid;
+            Console.WriteLine($"Reading trace file {traceFile} for JIT events");
 
-            try
+            Console.WriteLine("Test modules:");
+            foreach (var x in _testModuleNames)
             {
-                Debug.Assert(output != null);
+                Console.WriteLine(x);
+            }
 
-                Provider[] providerCollection = new[] { new Provider("Microsoft-Windows-DotNETRuntime", (ulong)ClrTraceEventParser.Keywords.Default, EventLevel.Informational) };
+            Console.WriteLine("Test Folders:");
+            foreach (var x in _testFolderNames)
+            {
+                Console.WriteLine(x);
+            }
+            var logOptions = new TraceLogOptions() 
+                {
+                    KeepAllEvents = true,
+                    ConversionLogName = @"d:\repro\r2r\conversion.txt",
+                    AlwaysResolveSymbols = true,
+                };
+            var etlxFile = TraceLog.CreateFromEventPipeDataFile(traceFile, null, logOptions);
+            var trace = TraceLog.OpenOrConvert(etlxFile, logOptions);
 
-                var configuration = new SessionConfiguration(
-                    circularBufferSizeMB: DefaultCircularBufferSizeInMB,
-                    outputPath: output,
-                    providers: providerCollection);
+            Console.WriteLine($"trace.Events.Log.EventCount: {trace.Events.Log.EventCount}");
+            Console.WriteLine($"trace.Events.Count(): {trace.Events.Count()}");
+            
+            if (trace.EventsLost > 0)
+            {
+                Console.WriteLine($"Warning: {trace.EventsLost} events were lost during trace production.");
+            }
+            if (trace.Truncated)
+            {
+                Console.WriteLine($"Warning: Large trace log got truncated.");
+            }
 
-                ulong sessionId = 0;
-                _collectionStream = EventPipeClient.CollectTracing(_pid, configuration, out sessionId);
+            foreach (var m in trace.Parsers)
+            {
+                Console.WriteLine(m.ToString());
+            }
+            
+            foreach (var m in trace.ModuleFiles)
+            {
+                Console.WriteLine(m.ToString());
+            }
+
+            // Select all loaded assemblies that match _testModulesNames or are in one of _testFolderNames
+            var moduleLoads = trace.Events
+                .Where(t =>
+                    string.Equals(t.ProviderName, "Microsoft-Windows-DotNETRuntime") &&
+                    string.Equals(t.EventName, "Loader/ModuleLoad") &&
+                    (ShouldMonitorModule(t.PayloadStringByName("ModuleILPath")) || ShouldMonitorModule(t.PayloadStringByName("ModuleNativePath"))))
+                .Select(e => e.Clone())
+                .ToList();
+
+            Console.WriteLine($"Found {moduleLoads.Count} test modules");
+            AssembliesWithEventsCount = moduleLoads.Count;
+
+            // For each monitored module, select all method load events where the JIT was active
+            foreach (var module in moduleLoads)
+            {
+                var jitEvents = trace.Events
+                    .Where(t =>
+                        string.Equals(t.ProviderName, "Microsoft-Windows-DotNETRuntime") &&
+                        string.Equals(t.EventName, "Method/LoadVerbose") &&
+                        ((bool)t.PayloadByName("IsJitted")) == true &&
+                        (int)t.PayloadByName("ModuleID") == (int)module.PayloadByName("ModuleID"))
+                    .Select(e => e.Clone())
+                    .ToList();
                 
-                if (sessionId == 0)
-                {
-                    throw new Exception("Unable to create session.");
-                }
-                else
-                {
-                    Console.WriteLine($"[dbg] EventPipe session created with id {sessionId}");
-                }
+                string moduleName = Path.GetFileNameWithoutExtension(module.PayloadStringByName("ModuleILFileName"));
+                Console.WriteLine($"Assembly {moduleName} contains {jitEvents.Count} events");
             }
-            catch (Exception ex)
+
+            foreach (var evt in trace.Events)
             {
-                Console.Error.WriteLine($"[ERROR] {ex.ToString()}");
+                Console.WriteLine(evt.ToString());
             }
         }
 
-        public void StopCollection()
+        private bool ShouldMonitorModule(string fileName)
         {
-            EventPipeClient.StopTracing(_pid, _sessionId);
-        }
+            if (File.Exists(fileName) && _testFolderNames.Contains(Path.GetDirectoryName(fileName).ToAbsoluteDirectoryPath().ToLower()))
+                return true;
 
-        
-        /// <summary>
-        /// Set the process to monitor events for given its Id. This should be set immediately after
-        /// calling Process.Start to ensure no module load events are missed for the runtime instance.
-        /// </summary>
-        public void SetProcessId(int pid)
-        {
-            _pid = pid;
+            if (_testModuleNames.Contains(fileName.ToLower()))
+                return true;
+
+            return false;
         }
 
         public IReadOnlyDictionary<string, HashSet<string>> JittedMethods => _methodsJitted;
@@ -91,6 +130,6 @@ namespace ReadyToRun.TestHarness
         /// <summary>
         /// Returns the number of test assemblies that were loaded by the runtime
         /// </summary>
-        public int AssembliesWithEventsCount => _testModuleIds.Count;
+        public int AssembliesWithEventsCount {private set; get;}
     }
 }

@@ -1051,8 +1051,6 @@ internal class Program
 
     public static int Main(string[] args)
     {
-        Console.WriteLine($"Any key to start test. Attach dotnet-collect now to PID: {Process.GetCurrentProcess().Id}");
-        Console.ReadKey();
         _passedTests = new List<string>();
         _failedTests = new List<string>();
 
