@@ -143,11 +143,13 @@ namespace ReadyToRun.TestHarness
                 {
                     Directory.Delete(traceFolder, true);
                 }
+                Console.WriteLine($"Creating {traceFolder}");
                 Directory.CreateDirectory(traceFolder);
+                Debug.Assert(Directory.Exists(traceFolder));
 
                 RunTest(null, null, passThroughArguments, out exitCode, traceFolder);
 
-                string traceFile = Directory.EnumerateFiles(traceFolder, "*.netperf").First();
+                string traceFile = Directory.EnumerateFiles(traceFolder, "*.nettrace").First();
                 r2rMethodFilter.ParseTraceFile(traceFile);
 
                 Console.WriteLine("Test execution " + (exitCode == StatusTestPassed ? "PASSED" : "FAILED"));
@@ -285,7 +287,6 @@ namespace ReadyToRun.TestHarness
                     {
                         process.StartInfo.EnvironmentVariables.Add("COMPLUS_EnableEventPipe", "1");
                         process.StartInfo.EnvironmentVariables.Add("COMPLUS_EventPipeOutputPath", eventPipeTracePath);
-                        process.StartInfo.EnvironmentVariables.Add("COMPLUS_EventPipeRundown", "1");
                     }
 
                     process.Start();

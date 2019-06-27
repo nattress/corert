@@ -50,11 +50,12 @@ namespace ReadyToRun.TestHarness
                 Console.WriteLine(x);
             }
             var logOptions = new TraceLogOptions() 
-                {
-                    KeepAllEvents = true,
-                    ConversionLogName = @"d:\repro\r2r\conversion.txt",
-                    AlwaysResolveSymbols = true,
-                };
+            {
+                KeepAllEvents = true,
+                ConversionLogName = @"d:\repro\r2r\conversion.txt",
+                AlwaysResolveSymbols = true,
+            };
+
             var etlxFile = TraceLog.CreateFromEventPipeDataFile(traceFile, null, logOptions);
             var trace = TraceLog.OpenOrConvert(etlxFile, logOptions);
 
