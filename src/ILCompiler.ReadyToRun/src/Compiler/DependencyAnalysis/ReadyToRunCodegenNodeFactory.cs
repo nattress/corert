@@ -17,7 +17,7 @@ namespace ILCompiler.DependencyAnalysis
 {
     using ReadyToRunHelper = ILCompiler.DependencyAnalysis.ReadyToRun.ReadyToRunHelper;
 
-    public sealed class ReadyToRunCodegenNodeFactory : NodeFactory
+    public class ReadyToRunCodegenNodeFactory : NodeFactory
     {
         private Dictionary<TypeAndMethod, IMethodNode> _importMethods;
 

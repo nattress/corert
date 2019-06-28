@@ -13,22 +13,22 @@ using Internal.IL;
 
 namespace ILCompiler
 {
-    public sealed class ILScannerBuilder
+    public class ILScannerBuilder
     {
-        private readonly CompilerTypeSystemContext _context;
-        private readonly CompilationModuleGroup _compilationGroup;
-        private readonly NameMangler _nameMangler;
-        private readonly ILProvider _ilProvider;
-        private readonly PInvokeILEmitterConfiguration _pinvokePolicy;
+        protected readonly CompilerTypeSystemContext _context;
+        protected readonly CompilationModuleGroup _compilationGroup;
+        protected readonly NameMangler _nameMangler;
+        protected readonly ILProvider _ilProvider;
+        protected readonly PInvokeILEmitterConfiguration _pinvokePolicy;
 
         // These need to provide reasonable defaults so that the user can optionally skip
         // calling the Use/Configure methods and still get something reasonable back.
-        private Logger _logger = Logger.Null;
-        private DependencyTrackingLevel _dependencyTrackingLevel = DependencyTrackingLevel.None;
-        private IEnumerable<ICompilationRootProvider> _compilationRoots = Array.Empty<ICompilationRootProvider>();
-        private MetadataManager _metadataManager;
+        protected Logger _logger = Logger.Null;
+        protected DependencyTrackingLevel _dependencyTrackingLevel = DependencyTrackingLevel.None;
+        protected IEnumerable<ICompilationRootProvider> _compilationRoots = Array.Empty<ICompilationRootProvider>();
+        protected MetadataManager _metadataManager;
 
-        internal ILScannerBuilder(CompilerTypeSystemContext context, CompilationModuleGroup compilationGroup, NameMangler mangler, ILProvider ilProvider, PInvokeILEmitterConfiguration pinvokePolicy)
+        protected internal ILScannerBuilder(CompilerTypeSystemContext context, CompilationModuleGroup compilationGroup, NameMangler mangler, ILProvider ilProvider, PInvokeILEmitterConfiguration pinvokePolicy)
         {
             _context = context;
             _compilationGroup = compilationGroup;
@@ -56,7 +56,7 @@ namespace ILCompiler
             return this;
         }
 
-        public IILScanner ToILScanner()
+        public virtual IILScanner ToILScanner()
         {
             var interopStubManager = new CompilerGeneratedInteropStubManager(_compilationGroup, _context, new InteropStateManager(_context.GeneratedAssembly));
             var nodeFactory = new ILScanNodeFactory(_context, _compilationGroup, _metadataManager, interopStubManager, _nameMangler);

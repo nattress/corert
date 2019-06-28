@@ -39,7 +39,7 @@ namespace ILCompiler.Compiler.Tests
                 .UseCompilationRoots(new ICompilationRootProvider[] { new SingleMethodRootProvider(method) })
                 .ToILScanner();
 
-            return scanner.Scan().GetDevirtualizationManager();
+            return ((ILScanResults)scanner.Scan()).GetDevirtualizationManager();
         }
 
         [Fact]

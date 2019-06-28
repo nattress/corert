@@ -33,6 +33,7 @@
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\ExceptionInfoLookupTableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ExternalTypeNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRunCodegenNodeFactory.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ReadyToRunILScanNodeFactory.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\AvailableType.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\ByteArrayComparer.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\CompilerIdentifierNode.cs" />
@@ -87,6 +88,8 @@
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\SectionStartNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\TypeAndMethod.cs" />
     <Compile Include="Compiler\ReadyToRunHashCode.cs" />
+    <Compile Include="Compiler\ReadyToRunILScanner.cs" />
+    <Compile Include="Compiler\ReadyToRunILScannerBuilder.cs" />
     <Compile Include="Compiler\ReadyToRunLibraryRootProvider.cs" />
     <Compile Include="Compiler\ReadyToRunCompilerContext.cs" />
     <Compile Include="Compiler\ReadyToRunCodegenCompilation.cs" />
@@ -97,6 +100,7 @@
     <Compile Include="Compiler\ReadyToRunTableManager.cs" />
     <Compile Include="Compiler\RuntimeDeterminedTypeHelper.cs" />
     <Compile Include="Compiler\SystemObjectFieldLayoutAlgorithm.cs" />
+    <Compile Include="IL\Importer.ReadyToRun.cs" />
     <Compile Include="IL\ReadyToRunILProvider.cs" />
     <Compile Include="JitInterface\CorInfoImpl.ReadyToRun.cs" />
     <Compile Include="ObjectWriter\MetadataRvaFixupBuilder.cs" />
@@ -112,6 +116,12 @@
     </Compile>
     <Compile Include="..\..\Common\src\TypeSystem\IL\HelperExtensions.cs">
       <Link>IL\HelperExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Common\src\TypeSystem\IL\ILImporter.cs">
+      <Link>IL\ILImporter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Common\src\TypeSystem\IL\StackValueKind.cs">
+      <Link>IL\StackValueKind.cs</Link>
     </Compile>
     <Compile Include="..\..\JitInterface\src\TypeString.cs">
       <Link>JitInterface\TypeString.cs</Link>

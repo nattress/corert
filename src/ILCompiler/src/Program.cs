@@ -585,7 +585,7 @@ namespace ILCompiler
 
             builder.UseILProvider(ilProvider);
 
-            ILScanResults scanResults = null;
+            CompilationResults scanResults = null;
             if (useScanner)
             {
                 ILScannerBuilder scannerBuilder = builder.GetILScannerBuilder()
@@ -624,21 +624,22 @@ namespace ILCompiler
                 .UseOptimizationMode(_optimizationMode)
                 .UseDebugInfoProvider(debugInfoProvider);
 
-            if (scanResults != null)
+            var ilScanResults = scanResults as ILScanResults;
+            if (ilScanResults != null)
             {
                 // If we have a scanner, feed the vtable analysis results to the compilation.
                 // This could be a command line switch if we really wanted to.
-                builder.UseVTableSliceProvider(scanResults.GetVTableLayoutInfo());
+                builder.UseVTableSliceProvider(ilScanResults.GetVTableLayoutInfo());
 
                 // If we have a scanner, feed the generic dictionary results to the compilation.
                 // This could be a command line switch if we really wanted to.
-                builder.UseGenericDictionaryLayoutProvider(scanResults.GetDictionaryLayoutInfo());
+                builder.UseGenericDictionaryLayoutProvider(ilScanResults.GetDictionaryLayoutInfo());
 
                 // If we feed any outputs of the scanner into the compilation, it's essential
                 // we use scanner's devirtualization manager. It prevents optimizing codegens
                 // from accidentally devirtualizing cases that can never happen at runtime
                 // (e.g. devirtualizing a method on a type that never gets allocated).
-                builder.UseDevirtualizationManager(scanResults.GetDevirtualizationManager());
+                builder.UseDevirtualizationManager(ilScanResults.GetDevirtualizationManager());
             }
 
             ICompilation compilation = builder.ToCompilation();

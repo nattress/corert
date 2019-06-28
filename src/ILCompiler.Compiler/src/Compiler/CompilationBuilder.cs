@@ -123,7 +123,7 @@ namespace ILCompiler
             return _dependencyTrackingLevel.CreateDependencyGraph(factory, comparer);
         }
 
-        public ILScannerBuilder GetILScannerBuilder(CompilationModuleGroup compilationGroup = null)
+        public virtual ILScannerBuilder GetILScannerBuilder(CompilationModuleGroup compilationGroup = null)
         {
             return new ILScannerBuilder(_context, compilationGroup ?? _compilationGroup, _nameMangler, GetILProvider(), _pinvokePolicy);
         }

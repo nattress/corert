@@ -129,5 +129,10 @@ namespace ILCompiler
                 jitConfig,
                 _inputFilePath);
         }
+
+        public override ILScannerBuilder GetILScannerBuilder(CompilationModuleGroup compilationGroup = null)
+        {
+            return new ReadyToRunILScannerBuilder(_context, compilationGroup ?? _compilationGroup, _nameMangler, GetILProvider(), _pinvokePolicy, _inputFilePath);
+        }
     }
 }

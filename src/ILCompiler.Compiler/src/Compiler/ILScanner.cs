@@ -77,7 +77,7 @@ namespace ILCompiler
             }
         }
 
-        ILScanResults IILScanner.Scan()
+        CompilationResults IILScanner.Scan()
         {
             _dependencyGraph.ComputeMarkedNodes();
 
@@ -87,7 +87,7 @@ namespace ILCompiler
 
     public interface IILScanner
     {
-        ILScanResults Scan();
+        CompilationResults Scan();
     }
 
     internal class ScannerFailedException : InternalCompilerErrorException

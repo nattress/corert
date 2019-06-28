@@ -71,7 +71,7 @@ namespace ILCompiler.Compiler.Tests
                 .UseCompilationRoots(new ICompilationRootProvider[] { new SingleMethodRootProvider(method) })
                 .ToILScanner();
 
-            ILScanResults results = scanner.Scan();
+            ILScanResults results = scanner.Scan() as ILScanResults;
 
             //
             // Check invariants
