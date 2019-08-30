@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <NativeCodeGen>readytorun</NativeCodeGen>
+    <!-- <PublishReadyToRun>true</PublishReadyToRun> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ReadyToRunSkipAssembly Include="System.Runtime.WindowsRuntime" />
+  </ItemGroup>
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), FunctionalTest.targets))\FunctionalTest.targets" />
+</Project>

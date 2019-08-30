@@ -442,15 +442,15 @@ goto :eof
     ::
     echo Publishing !__SourceFolder! %Publish_Rid%
     echo "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% --self-contained
-    "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% --self-contained
+    "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% -v detailed --self-contained
     set __SavedErrorLevel=!ErrorLevel!
     if not "!__SavedErrorLevel!"=="0" (goto :RecordTestResult)
     
     ::
     :: Execute the app host entrypoint
     ::
-    echo Running test !__SourceFolder!\bin\%CoreRT_BuildType%\%CoreRT_BuildArch%\netcoreapp2.1\%Publish_Rid%\publish\!__SourceFileName!.exe
-    !__SourceFolder!\bin\%CoreRT_BuildType%\%CoreRT_BuildArch%\netcoreapp2.1\%Publish_Rid%\publish\!__SourceFileName!.exe
+    echo Running test !__SourceFolder!\bin\%CoreRT_BuildType%\%CoreRT_BuildArch%\netcoreapp3.0\%Publish_Rid%\publish\!__SourceFileName!.exe
+    !__SourceFolder!\bin\%CoreRT_BuildType%\%CoreRT_BuildArch%\netcoreapp3.0\%Publish_Rid%\publish\!__SourceFileName!.exe
     set __SavedErrorLevel=!ErrorLevel!
 
     goto :RecordTestResult
