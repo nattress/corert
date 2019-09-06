@@ -442,7 +442,7 @@ goto :eof
     ::
     echo Publishing !__SourceFolder! %Publish_Rid%
     echo "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% --self-contained
-    "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% -v detailed --self-contained
+    "%CoreRT_CliDir%\dotnet.exe" publish "/p:IlcPath=%CoreRT_ToolchainDir%" "/p:Configuration=%CoreRT_BuildType%" "/p:Platform=%CoreRT_BuildArch%" !__SourceFolder! -r %Publish_Rid% --self-contained
     set __SavedErrorLevel=!ErrorLevel!
     if not "!__SavedErrorLevel!"=="0" (goto :RecordTestResult)
     
